@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="system">
+<html lang="en" data-theme="antigravity-light">
 <head>
   <meta charset="UTF-8">
   <title>Grauque</title>
@@ -14,7 +14,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-title-row">
-          <img src="assets/icon.png" width="26" height="26" alt="Grauque" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25)); display: block;">
+          <img class="app-brand-logo logo-theme-adaptive" id="sidebar-logo-img" src="assets/icon.png" width="26" height="26" alt="Grauque" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25)); display: block;">
           <span class="brand-name">Grauque</span>
         </div>
         <button class="collapse-sidebar-btn" id="btn-collapse-sidebar" title="Collapse Sidebar (⌘B)">
@@ -123,12 +123,6 @@
             </button>
           </div>
 
-          <select class="model-selector-dropdown" id="top-model-select">
-            <option value="openai/gpt-oss-120b" selected>GPT-OSS 120B (Reasoning • Default)</option>
-            <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Vision & Images)</option>
-            <option value="openai/gpt-oss-20b">GPT-OSS 20B (Fast)</option>
-            <option value="allam-2-7b">Allam 2 7B</option>
-          </select>
           <button class="top-action-btn" id="btn-open-memory" title="Grauque Memory & Profile (What AI remembers about you)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"></path>
@@ -151,17 +145,8 @@
       <section class="messages-container" id="messages-container">
         <!-- Empty State / Welcome -->
         <div class="welcome-screen" id="welcome-screen">
-          <div class="welcome-logo">
-            <svg width="40" height="40" viewBox="0 0 48 48" fill="none">
-              <path d="M 30 14 C 28 9 20 8 16 13 C 12 18 13 24 18 26 C 23 28 25 31 23 35 C 21 38 16 38 13 35 C 11.5 33.5 12 31 10 32 C 8 33 10 38 14 40 C 19 42 26 40 28 34 C 30 28 26 25 21 23 C 16 21 16 16 19 14 C 22 12 26 13 28 16 Z" fill="#FAF8F5"/>
-              <circle cx="34" cy="11" r="2.2" fill="#FAF8F5"/>
-              <circle cx="37" cy="15" r="1.4" fill="#FAF8F5"/>
-              <circle cx="9" cy="27" r="1.8" fill="#FAF8F5"/>
-              <circle cx="7" cy="33" r="1.3" fill="#FAF8F5"/>
-              <circle cx="15" cy="42" r="1.5" fill="#FAF8F5"/>
-              <circle cx="29" cy="41" r="1.6" fill="#FAF8F5"/>
-              <circle cx="33" cy="23" r="1.8" fill="#FAF8F5"/>
-            </svg>
+          <div class="welcome-logo-wrapper">
+            <img class="welcome-app-logo logo-theme-adaptive" id="welcome-logo-img" src="assets/icon.png" width="68" height="68" alt="Grauque Logo" />
           </div>
           <h1 class="welcome-title">What would you like to explore today?</h1>
           <p class="welcome-subtitle">Powered by Groq's high-speed inference engine. Ask questions, analyze images, build interactive quizzes, or write code.</p>
@@ -209,6 +194,21 @@
               <span class="card-title">Quiz Studio</span>
               <span class="card-desc">Self-grading interactive assessment</span>
             </div>
+          </div>
+
+          <!-- Bottom GitHub Repo Link -->
+          <div class="welcome-footer">
+            <a href="https://github.com/thepc101/grauque" target="_blank" rel="noopener noreferrer" class="welcome-github-link" id="link-welcome-github" title="View Grauque on GitHub (thepc101/grauque)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"></path>
+              </svg>
+              <span>GitHub / thepc101 / grauque</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="external-icon">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
           </div>
         </div>
       </section>
@@ -259,67 +259,132 @@
           
           <div class="input-toolbar">
             <div class="toolbar-left">
-              <button class="attach-btn" id="btn-attach-image" title="Attach image (Switches to Qwen 3.8 Vision)">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
+              <!-- Combined Attachment Button (Image & PDF) -->
+              <button class="toolbar-icon-btn" id="btn-attach-file" title="Attach Image or PDF Document">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                 </svg>
-                <span>Image</span>
               </button>
+              <input type="file" id="unified-file-input" accept="image/*,.pdf,application/pdf" style="display:none;" />
               <input type="file" id="image-file-input" accept="image/*" style="display:none;" />
-
-              <button class="attach-btn" id="btn-attach-pdf" title="Attach PDF Document (Notes, textbook, paper, syllabus)">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <path d="M10 12h4"></path>
-                  <path d="M10 16h4"></path>
-                </svg>
-                <span>PDF</span>
-              </button>
               <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" style="display:none;" />
 
-              <button class="mic-btn" id="btn-mic-prompt" title="Voice to text (Dictate with Groq Whisper)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Student Study Tools 3-Line Menu Button & Floating Popup -->
+              <div class="study-tools-wrapper">
+                <button class="toolbar-icon-btn" id="btn-study-tools-menu" title="Study Tools (Flashcards, Study Guide, Quiz, Problem Solver, Focus Timer)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                  </svg>
+                </button>
+
+                <!-- Floating Study Tools Popup Menu -->
+                <div class="study-tools-popup" id="study-tools-popup" style="display:none;">
+                  <div class="study-popup-header">
+                    <span class="study-popup-title">Student Study Suite</span>
+                    <span class="study-popup-badge">Tools</span>
+                  </div>
+                  <div class="study-popup-items">
+                    <button class="study-popup-item" id="menu-item-flashcards">
+                      <div class="study-item-icon icon-flashcards">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                      </div>
+                      <div class="study-item-text">
+                        <span class="study-item-name">Flashcard Deck Studio</span>
+                        <span class="study-item-desc">3D flip-cards with Leitner ratings & Anki (.txt) export</span>
+                      </div>
+                    </button>
+
+                    <button class="study-popup-item" id="menu-item-study-guide">
+                      <div class="study-item-icon icon-study-guide">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                      </div>
+                      <div class="study-item-text">
+                        <span class="study-item-name">Exam Study Guide & Cram Sheet</span>
+                        <span class="study-item-desc">High-yield cheat sheets, key formulas & common test traps</span>
+                      </div>
+                    </button>
+
+                    <button class="study-popup-item" id="menu-item-quiz">
+                      <div class="study-item-icon icon-quiz">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                      </div>
+                      <div class="study-item-text">
+                        <span class="study-item-name">Interactive Quiz Studio</span>
+                        <span class="study-item-desc">Active recall multiple-choice tests with instant feedback</span>
+                      </div>
+                    </button>
+
+                    <button class="study-popup-item" id="menu-item-tutor">
+                      <div class="study-item-icon icon-tutor">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                        </svg>
+                      </div>
+                      <div class="study-item-text">
+                        <span class="study-item-name">Socratic Problem Solver</span>
+                        <span class="study-item-desc">Step-by-step problem walkthrough or progressive hints</span>
+                      </div>
+                    </button>
+
+                    <button class="study-popup-item" id="menu-item-pomodoro">
+                      <div class="study-item-icon icon-pomodoro">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </div>
+                      <div class="study-item-text">
+                        <span class="study-item-name">Pomodoro Focus Timer</span>
+                        <span class="study-item-desc">25m focus / 5m break interval timer with completion alerts</span>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Choosing AI Model on Bottom Bar underneath prompt -->
+              <div class="bottom-model-picker">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="model-picker-sparkle">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                <select class="bottom-model-select" id="bottom-model-select" title="Choose AI Model">
+                  <option value="openai/gpt-oss-120b" selected>GPT-OSS 120B (Reasoning)</option>
+                  <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Vision & Images)</option>
+                  <option value="openai/gpt-oss-20b">GPT-OSS 20B (Fast)</option>
+                  <option value="allam-2-7b">Allam 2 7B</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <span class="live-speed-label" id="live-speed-label"></span>
+
+              <!-- Simple Voice Icon on the Prompting Box -->
+              <button class="mic-icon-btn" id="btn-mic-prompt" title="Voice Dictation (Groq Whisper Large v3)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                   <line x1="12" y1="19" x2="12" y2="23"></line>
                   <line x1="8" y1="23" x2="16" y2="23"></line>
                 </svg>
-                <span id="mic-status-label">Voice</span>
               </button>
 
-              <button class="quiz-quick-pill" id="btn-quick-flashcards" title="Generate Flashcard Deck">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                </svg>
-                <span>Flashcards</span>
-              </button>
-
-              <button class="quiz-quick-pill" id="btn-quick-study-guide" title="Generate Exam Study Guide">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                </svg>
-                <span>Study Guide</span>
-              </button>
-
-              <button class="quiz-quick-pill" id="btn-quick-quiz" title="Generate Interactive Quiz">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-                <span>Quiz</span>
-              </button>
-            </div>
-            <div class="toolbar-right">
-              <span class="live-speed-label" id="live-speed-label"></span>
               <button class="send-btn" id="btn-send" title="Send (Enter)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
@@ -436,10 +501,12 @@
         <div class="form-group">
           <label class="form-label" for="setting-theme">Appearance Theme</label>
           <select class="form-input" id="setting-theme">
-            <option value="system">System (Automatic)</option>
-            <option value="light">Claude Paper (Warm Light)</option>
-            <option value="dark">Claude Obsidian (Dark)</option>
+            <option value="antigravity-light">Antigravity Light (Modern Slate & Electric Blue)</option>
+            <option value="claude-dark" selected>Original Grauque Obsidian (Dark)</option>
+            <option value="claude-light">Original Grauque Paper (Warm Light)</option>
+            <option value="system">System (Automatic Follow OS)</option>
           </select>
+          <div class="form-hint">Choose between Antigravity modern light and original Grauque themes.</div>
         </div>
       </div>
 

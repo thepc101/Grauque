@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="build/icon.png" width="96" height="96" alt="Grauque Logo" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(217,107,67,0.25);" />
+  <img src="build/icon.png" width="96" height="96" alt="Grauque Logo" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(2,132,199,0.25);" />
 </p>
 
 <h1 align="center">Grauque</h1>
@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="release/Grauque-1.0.0-mac-x64.dmg"><img src="https://img.shields.io/badge/Download-macOS%20Intel%20(DMG)-D96B43?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS DMG" /></a>
+  <a href="release/Grauque-1.0.0-mac-x64.dmg"><img src="https://img.shields.io/badge/Download-macOS%20Intel%20(DMG)-0284C7?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS DMG" /></a>
 </p>
 
 <p align="center">
@@ -28,6 +28,8 @@
 
 - [Overview](#-overview)
 - [Key Features](#-key-features)
+  - [🎨 Antigravity Light Brand Aesthetic](#-antigravity-light-brand-aesthetic)
+  - [🧭 Clean, Uncrammed Workspace & Study Tools Popup](#-clean-uncrammed-workspace--study-tools-popup)
   - [📄 Native Apple PDFKit Document Intelligence](#-native-apple-pdfkit-document-intelligence)
   - [🧠 Persistent AI Memory](#-persistent-ai-memory)
   - [🎓 Student Study Suite](#-student-study-suite)
@@ -35,7 +37,6 @@
   - [📐 Mathematical LaTeX & Chemistry (KaTeX)](#-mathematical-latex--chemistry-katex)
   - [⚡ Global Double-Tap Option (⌥⌥) Quick Prompt](#-global-double-tap-option--quick-prompt)
   - [👁️ Multimodal Vision with Qwen 3.8](#-multimodal-vision-with-qwen-38)
-  - [🎨 Editorial Claude Aesthetic](#-editorial-claude-aesthetic)
 - [Supported Groq Models](#-supported-groq-models)
 - [Installation](#-installation)
 - [Keyboard Shortcuts](#-keyboard-shortcuts)
@@ -47,11 +48,26 @@
 
 ## 🌟 Overview
 
-**Grauque** (pronounced */ɡʁok/*) is a native macOS desktop assistant built specifically for Intel Macs (`x86_64`) that connects directly to Groq's low-latency inference engine. Delivering responses at up to **250+ tokens per second**, Grauque combines the typographic elegance of an editorial publication with power tools tailored for students, researchers, and developers.
+**Grauque** (pronounced */ɡʁok/*) is a native macOS desktop assistant built specifically for Intel Macs (`x86_64`) that connects directly to Groq's low-latency inference engine. Delivering responses at up to **250+ tokens per second**, Grauque features a brand identity inspired by Google DeepMind / Antigravity with a clean geometric levitation logo, electric azure & cyan palette, and high-productivity tools tailored for students, researchers, and developers.
 
 ---
 
 ## 🚀 Key Features
+
+### 🎨 Antigravity Light Brand Aesthetic
+- **Minimalist Antigravity Logo**: A modern, geometric levitation glyph combining an upward quantum trajectory with an orbital loop, styled with electric cyan (`#38BDF8`), vibrant azure (`#0284C7`), and deep indigo (`#4F46E5`).
+- **Antigravity Crisp Slate Light**: Clean slate styling with subtle gradients, frosted glass cards, and crisp contrast.
+- **Original Grauque Editorial Themes**: Keep the classic warm ivory paper or dark obsidian look if you prefer.
+- **Seamless Theme Switcher**: Toggle dynamically in **Settings (`⌘,`)** under Appearance Theme.
+
+---
+
+### 🧭 Clean, Uncrammed Workspace & Study Tools Popup
+- **3-Line Study Tools Menu (`☰`)**: All student learning features are neatly organized into a floating popup menu next to the input box—keeping your chat workspace clean, spacious, and distraction-free.
+- **Under-Prompt Model Selector**: Switch AI models effortlessly right from the bottom bar directly underneath the prompt box.
+- **Unified Attachment Button (`📎`)**: A single intuitive attachment button that seamlessly accepts both images (diagrams, homework, photos) and PDF documents.
+- **Minimalist Voice Dictation Button (`🎙️`)**: A clean, circular microphone button right inside the prompt box with live audio-waveform pulsation.
+- **Unobstructed macOS Window Controls**: Traffic light buttons (close, minimize, fullscreen) are fully spaced and never collide with sidebar or header buttons.
 
 ### 📄 Native Apple PDFKit Document Intelligence
 - **Hardware-Accelerated Extraction**: Uses macOS's native `PDFKit.framework` compiled via Objective-C (`bin/pdf-extract`) to parse lecture slides, research papers, syllabi, and textbooks in milliseconds with 100% unicode and layout fidelity.
@@ -120,12 +136,11 @@ Built to optimize learning, active recall, and focus:
 
 ---
 
-### 🎨 Editorial Claude Aesthetic
-- Minimalist, distraction-free typography with warm ivory light mode and obsidian dark mode.
+### ⚡ Real-Time Streaming & Productivity
 - Real-time token streaming speed indicator (e.g. `240 tokens/s • 0.8s`).
 - Collapsible reasoning/thinking analysis accordion for models that emit chain-of-thought tokens.
 - 1-Click **Export to Markdown** for easy note saving.
-- Traffic light buttons clearance: custom padding prevents window controls from overlapping sidebar buttons.
+- Unobstructed macOS traffic light buttons: custom padding prevents window controls from overlapping sidebar buttons.
 
 ---
 

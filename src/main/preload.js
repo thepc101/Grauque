@@ -27,7 +27,8 @@ contextBridge.exposeInMainWorld('grauqueApi', {
   maximizeWindow: () => ipcRenderer.send('window:maximize'),
   closeWindow: () => ipcRenderer.send('window:close'),
 
-  // System info
+  // System info & URL Opening
+  openExternal: (url) => ipcRenderer.invoke('system:open-external', url),
   platform: process.platform,
   arch: process.arch
 });

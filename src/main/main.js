@@ -69,7 +69,7 @@ function createMainWindow() {
     title: 'Grauque',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 18 },
-    backgroundColor: '#FAF9F5',
+    backgroundColor: '#F8FAFC',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -77,6 +77,13 @@ function createMainWindow() {
       spellcheck: true
     },
     show: false
+  });
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
   });
 
   mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
@@ -293,6 +300,14 @@ ipcMain.handle('system:open-accessibility-settings', () => {
     exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"');
   });
   return true;
+});
+
+ipcMain.handle('system:open-external', (_event, url) => {
+  if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    shell.openExternal(url).catch(() => {});
+    return true;
+  }
+  return false;
 });
 
 ipcMain.handle('system:request-mic-permission', async () => {

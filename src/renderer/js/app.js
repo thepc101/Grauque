@@ -38,7 +38,8 @@ class GrauqueApp {
 
     // Main
     this.chatTitleDisplay = document.getElementById('chat-title-display');
-    this.topModelSelect = document.getElementById('top-model-select');
+    this.bottomModelSelect = document.getElementById('bottom-model-select');
+    this.topModelSelect = document.getElementById('top-model-select') || this.bottomModelSelect;
     this.btnExportChat = document.getElementById('btn-export-chat');
     this.messagesContainer = document.getElementById('messages-container');
     this.welcomeScreen = document.getElementById('welcome-screen');
@@ -51,6 +52,19 @@ class GrauqueApp {
     this.btnRemoveImage = document.getElementById('btn-remove-image');
     this.btnAttachImage = document.getElementById('btn-attach-image');
     this.imageFileInput = document.getElementById('image-file-input');
+
+    // Combined Attachment Elements (Image & PDF)
+    this.btnAttachFile = document.getElementById('btn-attach-file');
+    this.unifiedFileInput = document.getElementById('unified-file-input');
+
+    // Study Tools 3-Line Menu & Popup
+    this.btnStudyToolsMenu = document.getElementById('btn-study-tools-menu');
+    this.studyToolsPopup = document.getElementById('study-tools-popup');
+    this.menuItemFlashcards = document.getElementById('menu-item-flashcards');
+    this.menuItemStudyGuide = document.getElementById('menu-item-study-guide');
+    this.menuItemQuiz = document.getElementById('menu-item-quiz');
+    this.menuItemTutor = document.getElementById('menu-item-tutor');
+    this.menuItemPomodoro = document.getElementById('menu-item-pomodoro');
 
     // PDF Elements
     this.btnAttachPdf = document.getElementById('btn-attach-pdf');
@@ -174,7 +188,7 @@ class GrauqueApp {
         model: 'openai/gpt-oss-120b',
         temperature: 0.7,
         maxTokens: 4096,
-        theme: 'system'
+        theme: 'antigravity-light'
       };
     }
 
@@ -187,8 +201,32 @@ class GrauqueApp {
   }
 
   applySettingsToUI() {
-    const theme = this.settings.theme || 'system';
-    document.documentElement.setAttribute('data-theme', theme);
+    let theme = this.settings.theme || 'antigravity-light';
+
+    // Normalize legacy or cosmic dark
+    if (theme === 'antigravity-dark' || theme === 'dark' || theme === 'cosmic') {
+      theme = 'antigravity-light';
+      this.settings.theme = 'antigravity-light';
+      if (window.grauqueApi) {
+        window.grauqueApi.saveSettings(this.settings);
+      }
+    }
+    if (theme === 'light') theme = 'antigravity-light';
+
+    let effectiveTheme = theme;
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      effectiveTheme = prefersDark ? 'claude-dark' : 'antigravity-light';
+      document.documentElement.setAttribute('data-theme', effectiveTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+
+    // Update brand logos
+    const sidebarLogo = document.getElementById('sidebar-logo-img');
+    if (sidebarLogo) sidebarLogo.src = 'assets/icon.png';
+    const welcomeLogo = document.getElementById('welcome-logo-img');
+    if (welcomeLogo) welcomeLogo.src = 'assets/icon.png';
 
     const hasKey = Boolean(this.settings.apiKey && this.settings.apiKey.trim());
     if (this.sidebarApiDot) {
@@ -201,9 +239,14 @@ class GrauqueApp {
       }
     }
 
-    if (this.topModelSelect && this.settings.model) {
-      this.ensureModelInDropdown(this.topModelSelect, this.settings.model);
-      this.topModelSelect.value = this.settings.model;
+    const activeModel = this.settings.model || 'openai/gpt-oss-120b';
+    if (this.bottomModelSelect) {
+      this.ensureModelInDropdown(this.bottomModelSelect, activeModel);
+      this.bottomModelSelect.value = activeModel;
+    }
+    if (this.topModelSelect && this.topModelSelect !== this.bottomModelSelect) {
+      this.ensureModelInDropdown(this.topModelSelect, activeModel);
+      this.topModelSelect.value = activeModel;
     }
   }
 
@@ -238,12 +281,83 @@ class GrauqueApp {
       this.createNewConversation();
     });
 
-    // Model Select change
-    this.topModelSelect?.addEventListener('change', (e) => {
+    // Model Select change (Bottom Bar & Top Bar)
+    const onModelChange = (e) => {
       this.settings.model = e.target.value;
+      if (this.bottomModelSelect && this.bottomModelSelect !== e.target) {
+        this.bottomModelSelect.value = e.target.value;
+      }
+      if (this.topModelSelect && this.topModelSelect !== e.target) {
+        this.topModelSelect.value = e.target.value;
+      }
       if (window.grauqueApi) {
         window.grauqueApi.saveSettings(this.settings);
       }
+    };
+    if (this.bottomModelSelect) {
+      this.bottomModelSelect.addEventListener('change', onModelChange);
+    }
+    if (this.topModelSelect && this.topModelSelect !== this.bottomModelSelect) {
+      this.topModelSelect.addEventListener('change', onModelChange);
+    }
+
+    // Combined Attachment Events (Images & PDFs)
+    this.btnAttachFile?.addEventListener('click', () => {
+      this.unifiedFileInput?.click();
+    });
+
+    this.unifiedFileInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+          this.handlePdfSelected(file);
+        } else {
+          this.handleFileSelected(file);
+        }
+      }
+      this.unifiedFileInput.value = '';
+    });
+
+    // Study Tools 3-Line Menu & Popup Events
+    this.btnStudyToolsMenu?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = !this.studyToolsPopup || this.studyToolsPopup.style.display === 'none';
+      if (this.studyToolsPopup) {
+        this.studyToolsPopup.style.display = isHidden ? 'flex' : 'none';
+      }
+    });
+
+    window.addEventListener('click', (e) => {
+      if (this.studyToolsPopup && this.studyToolsPopup.style.display !== 'none') {
+        if (!this.studyToolsPopup.contains(e.target) && !this.btnStudyToolsMenu?.contains(e.target)) {
+          this.studyToolsPopup.style.display = 'none';
+        }
+      }
+    });
+
+    this.menuItemFlashcards?.addEventListener('click', () => {
+      if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
+      this.openFlashcardModal();
+    });
+
+    this.menuItemStudyGuide?.addEventListener('click', () => {
+      if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
+      this.openStudyGuideModal();
+    });
+
+    this.menuItemQuiz?.addEventListener('click', () => {
+      if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
+      this.openQuizStudio();
+    });
+
+    this.menuItemTutor?.addEventListener('click', () => {
+      if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
+      this.openTutorModal();
+    });
+
+    this.menuItemPomodoro?.addEventListener('click', () => {
+      if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
+      this.studentStudio.toggleTimer();
     });
 
     // Input auto-expand & send
@@ -394,6 +508,31 @@ class GrauqueApp {
           this.handleSend();
         }
       });
+    });
+
+    // Welcome Screen GitHub Link
+    const welcomeGithubLink = document.getElementById('link-welcome-github');
+    welcomeGithubLink?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const url = welcomeGithubLink.getAttribute('href') || 'https://github.com/thepc101/grauque';
+      if (window.grauqueApi && window.grauqueApi.openExternal) {
+        window.grauqueApi.openExternal(url);
+      } else {
+        window.open(url, '_blank');
+      }
+    });
+
+    // Global External Link Interceptor
+    document.addEventListener('click', (e) => {
+      const anchor = e.target.closest('a');
+      if (anchor && anchor.href && (anchor.href.startsWith('http://') || anchor.href.startsWith('https://'))) {
+        e.preventDefault();
+        if (window.grauqueApi && window.grauqueApi.openExternal) {
+          window.grauqueApi.openExternal(anchor.href);
+        } else {
+          window.open(anchor.href, '_blank');
+        }
+      }
     });
 
     // Voice Dictation (Groq Whisper Large v3)
@@ -598,11 +737,19 @@ class GrauqueApp {
     if (this.btnAttachImage) {
       this.btnAttachImage.classList.add('has-image');
     }
+    if (this.btnAttachFile) {
+      this.btnAttachFile.classList.add('has-file');
+    }
 
     // Auto-switch to vision model (qwen/qwen3.8-27b) when image is attached!
-    if (this.topModelSelect && this.topModelSelect.value !== 'qwen/qwen3.8-27b') {
-      this.ensureModelInDropdown(this.topModelSelect, 'qwen/qwen3.8-27b');
-      this.topModelSelect.value = 'qwen/qwen3.8-27b';
+    const modelSelect = this.bottomModelSelect || this.topModelSelect;
+    if (modelSelect && modelSelect.value !== 'qwen/qwen3.8-27b') {
+      this.ensureModelInDropdown(modelSelect, 'qwen/qwen3.8-27b');
+      modelSelect.value = 'qwen/qwen3.8-27b';
+      if (this.topModelSelect && this.topModelSelect !== modelSelect) {
+        this.ensureModelInDropdown(this.topModelSelect, 'qwen/qwen3.8-27b');
+        this.topModelSelect.value = 'qwen/qwen3.8-27b';
+      }
       this.settings.model = 'qwen/qwen3.8-27b';
       if (window.grauqueApi) {
         window.grauqueApi.saveSettings(this.settings);
@@ -621,6 +768,9 @@ class GrauqueApp {
     if (this.btnAttachImage) {
       this.btnAttachImage.classList.remove('has-image');
     }
+    if (this.btnAttachFile && !this.currentAttachedPdf) {
+      this.btnAttachFile.classList.remove('has-file');
+    }
   }
 
   // Handle PDF Attachment and Extraction
@@ -635,6 +785,9 @@ class GrauqueApp {
     }
     if (this.btnAttachPdf) {
       this.btnAttachPdf.classList.add('has-file');
+    }
+    if (this.btnAttachFile) {
+      this.btnAttachFile.classList.add('has-file');
     }
 
     try {
@@ -710,6 +863,9 @@ class GrauqueApp {
     }
     if (this.btnAttachPdf) {
       this.btnAttachPdf.classList.remove('has-file');
+    }
+    if (this.btnAttachFile && !this.currentAttachedImage) {
+      this.btnAttachFile.classList.remove('has-file');
     }
   }
 
@@ -1017,9 +1173,14 @@ class GrauqueApp {
     let modelToUse = this.settings.model || 'openai/gpt-oss-120b';
     if (hasImageInChat) {
       modelToUse = 'qwen/qwen3.8-27b';
-      if (this.topModelSelect && this.topModelSelect.value !== 'qwen/qwen3.8-27b') {
-        this.ensureModelInDropdown(this.topModelSelect, 'qwen/qwen3.8-27b');
-        this.topModelSelect.value = 'qwen/qwen3.8-27b';
+      const modelSelect = this.bottomModelSelect || this.topModelSelect;
+      if (modelSelect && modelSelect.value !== 'qwen/qwen3.8-27b') {
+        this.ensureModelInDropdown(modelSelect, 'qwen/qwen3.8-27b');
+        modelSelect.value = 'qwen/qwen3.8-27b';
+        if (this.topModelSelect && this.topModelSelect !== modelSelect) {
+          this.ensureModelInDropdown(this.topModelSelect, 'qwen/qwen3.8-27b');
+          this.topModelSelect.value = 'qwen/qwen3.8-27b';
+        }
         this.settings.model = 'qwen/qwen3.8-27b';
         if (window.grauqueApi) {
           window.grauqueApi.saveSettings(this.settings);
@@ -1446,7 +1607,9 @@ class GrauqueApp {
     this.settingSystemPrompt.value = this.settings.systemPrompt || '';
     this.settingEnableDoubleOpt.checked = this.settings.enableDoubleOption !== false;
     this.settingEnableOptSpace.checked = this.settings.enableOptionSpace !== false;
-    this.settingTheme.value = this.settings.theme || 'system';
+    let currentTheme = this.settings.theme || 'antigravity-light';
+    if (currentTheme === 'antigravity-dark' || currentTheme === 'dark' || currentTheme === 'cosmic') currentTheme = 'antigravity-light';
+    this.settingTheme.value = currentTheme;
 
     this.apiTestBadge.textContent = '';
     this.refreshAccessibilityStatus();
