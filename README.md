@@ -17,7 +17,11 @@ Grauque is a native desktop application designed for macOS running on Intel proc
 
 ### Key Capabilities
 
-- **Ultra-Fast Inference**: Streams tokens instantly via Groq API models including Llama 3.3 70B, Llama 3.1 8B, DeepSeek R1 70B, Mixtral 8x7B, and Gemma 2 9B.
+- **Ultra-Fast Inference**: Built for Groq's high-performance API models:
+  - **`openai/gpt-oss-120b`** (Default): Open-weight 120B Mixture-of-Experts reasoning model with 131k context window and real-time reasoning/thinking process visualization.
+  - **`qwen/qwen3.8-27b`**: Multimodal vision model supporting image uploads (PNG, JPEG, WebP) with drag-and-drop, clipboard paste, and image reasoning.
+  - **`openai/gpt-oss-20b`** & **`allam-2-7b`**: High-speed lightweight models.
+  - **Dynamic Model Discovery**: Fetch the latest active models directly from your Groq account anytime.
 - **Editorial Interface**: Minimalist aesthetic with warm ivory backgrounds, collapsible conversation history, code syntax highlighting, and responsive Markdown rendering.
 - **Interactive Quiz Generator**: Generates structured multiple-choice learning assessments with real-time score tracking, instant option verification, and educational explanations.
 - **System-Wide Quick Prompt**: Double-tap the `Option` (`⌥`) key from any application to bring up a centered search bar. Pressing `Enter` automatically shifts focus to the main application and streams the response.

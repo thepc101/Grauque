@@ -15,7 +15,7 @@ const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 
 const defaultSettings = {
   apiKey: '',
-  model: 'llama-3.3-70b-versatile',
+  model: 'openai/gpt-oss-120b',
   temperature: 0.7,
   maxTokens: 4096,
   systemPrompt: 'You are Grauque, an exceptionally capable, articulate, and thoughtful AI assistant powered by Groq. Provide well-structured, insightful responses using GitHub-flavored Markdown. When asked for quizzes, produce clear, engaging interactive questions with multiple choice options and detailed explanations.',
@@ -28,7 +28,18 @@ function loadSettings() {
   try {
     if (fs.existsSync(settingsPath)) {
       const data = fs.readFileSync(settingsPath, 'utf8');
-      return { ...defaultSettings, ...JSON.parse(data) };
+      const parsed = JSON.parse(data);
+      // Migrate deprecated models automatically if present
+      if (parsed.model && (
+        parsed.model.includes('llama-3.3-70b') ||
+        parsed.model.includes('llama-3.1-8b') ||
+        parsed.model.includes('gemma2') ||
+        parsed.model.includes('mixtral') ||
+        parsed.model.includes('deepseek-r1')
+      )) {
+        parsed.model = 'openai/gpt-oss-120b';
+      }
+      return { ...defaultSettings, ...parsed };
     }
   } catch (err) {
     console.warn('[Grauque] Error loading settings:', err);
@@ -55,7 +66,7 @@ function createMainWindow() {
     title: 'Grauque',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 18 },
-    backgroundColor: '#FBF9F5',
+    backgroundColor: '#FAF9F5',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -69,13 +80,6 @@ function createMainWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-  });
-
-  mainWindow.on('close', (e) => {
-    if (!app.isQuitting) {
-      // Keep app running in background on macOS
-      // mainWindow.hide();
-    }
   });
 
   mainWindow.on('closed', () => {
@@ -105,7 +109,6 @@ function createQuickPromptWindow() {
   quickPromptWindow.loadFile(path.join(__dirname, '../renderer/quick-prompt.html'));
 
   quickPromptWindow.on('blur', () => {
-    // Hide when losing focus so it doesn't get stuck
     quickPromptWindow.hide();
   });
 }
@@ -115,7 +118,6 @@ function showQuickPrompt() {
     createQuickPromptWindow();
   }
 
-  // Center on active display where cursor is
   const cursorPoint = screen.getCursorScreenPoint();
   const activeDisplay = screen.getDisplayNearestPoint(cursorPoint);
   const { x, y, width, height } = activeDisplay.bounds;
@@ -123,7 +125,7 @@ function showQuickPrompt() {
   const windowWidth = 680;
   const windowHeight = 190;
   const posX = Math.round(x + (width - windowWidth) / 2);
-  const posY = Math.round(y + height * 0.22); // Position in upper-center like Spotlight
+  const posY = Math.round(y + height * 0.22);
 
   quickPromptWindow.setBounds({
     x: posX,
@@ -141,14 +143,12 @@ function registerShortcuts() {
   globalShortcut.unregisterAll();
   const currentSettings = loadSettings();
 
-  // Register Option+Space or Alt+Space as universal fallback
   if (currentSettings.enableOptionSpace !== false) {
     try {
       const registered = globalShortcut.register('Alt+Space', () => {
         showQuickPrompt();
       });
       if (!registered) {
-        // Try fallback Command+Shift+G
         globalShortcut.register('CommandOrControl+Shift+G', () => {
           showQuickPrompt();
         });
@@ -158,7 +158,6 @@ function registerShortcuts() {
     }
   }
 
-  // Double Option tap listener
   if (currentSettings.enableDoubleOption !== false) {
     stopDoubleOptionListener();
     startDoubleOptionListener(() => {
@@ -167,7 +166,6 @@ function registerShortcuts() {
   }
 }
 
-// App lifecycle
 app.whenReady().then(() => {
   createMainWindow();
   createQuickPromptWindow();
@@ -229,6 +227,7 @@ ipcMain.handle('settings:save', (_event, newSettings) => {
   return result;
 });
 
+// Test API Key and fetch live models
 ipcMain.handle('groq:test-key', async (_event, apiKey) => {
   if (!apiKey || !apiKey.trim()) {
     return { success: false, error: 'API key is empty.' };
@@ -247,10 +246,17 @@ ipcMain.handle('groq:test-key', async (_event, apiKey) => {
     }
 
     const data = await response.json();
+    const rawModels = data.data || [];
+    
+    // Filter to active chat & vision models (exclude audio/whisper/guard)
+    const validChatModels = rawModels
+      .map(m => m.id)
+      .filter(id => !id.includes('whisper') && !id.includes('guard'));
+
     return {
       success: true,
-      modelCount: data.data ? data.data.length : 0,
-      models: data.data ? data.data.map(m => m.id) : []
+      modelCount: validChatModels.length,
+      models: validChatModels
     };
   } catch (err) {
     return { success: false, error: err.message };
@@ -258,10 +264,8 @@ ipcMain.handle('groq:test-key', async (_event, apiKey) => {
 });
 
 ipcMain.handle('system:check-accessibility', (_event, shouldPrompt) => {
-  // Check trust status
   const trusted = getAccessibilityStatus();
   if (!trusted && shouldPrompt) {
-    // Re-run listener with prompt flag to trigger macOS dialog
     startDoubleOptionListener(() => {
       showQuickPrompt();
     }, { promptAx: true });

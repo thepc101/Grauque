@@ -114,7 +114,6 @@ body {
   margin-left: -270px;
 }
 
-/* Titlebar drag region in sidebar */
 .sidebar-header {
   height: 52px;
   padding: 14px 16px;
@@ -122,7 +121,7 @@ body {
   align-items: center;
   justify-content: space-between;
   -webkit-app-region: drag;
-  padding-left: 78px; /* space for macOS traffic lights */
+  padding-left: 78px;
 }
 
 .brand-title-row {
@@ -171,7 +170,6 @@ body {
   color: var(--text-primary);
 }
 
-/* Action row in sidebar */
 .sidebar-actions {
   padding: 8px 14px;
   display: flex;
@@ -239,7 +237,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* History list */
 .sidebar-history {
   flex: 1;
   overflow-y: auto;
@@ -313,7 +310,6 @@ body {
   color: var(--accent);
 }
 
-/* Sidebar Footer */
 .sidebar-footer {
   padding: 12px 14px;
   border-top: 1px solid var(--border-color);
@@ -345,11 +341,11 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #f59e0b; /* amber when not set */
+  background: #f59e0b;
 }
 
 .api-status-dot.connected {
-  background: #10b981; /* green */
+  background: #10b981;
 }
 
 .hotkey-pill {
@@ -371,7 +367,6 @@ body {
   background: var(--bg-app);
 }
 
-/* Main Top Bar */
 .top-bar {
   height: 52px;
   padding: 0 16px;
@@ -436,6 +431,7 @@ body {
   outline: none;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
+  max-width: 280px;
 }
 
 .model-selector-dropdown:focus {
@@ -471,7 +467,6 @@ body {
   scroll-behavior: smooth;
 }
 
-/* Empty State / Welcome Screen */
 .welcome-screen {
   max-width: 680px;
   margin: auto;
@@ -580,8 +575,19 @@ body {
   max-width: 78%;
   font-size: 15px;
   line-height: 1.55;
-  white-space: pre-wrap;
   word-break: break-word;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.msg-attached-image {
+  max-width: 240px;
+  max-height: 240px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
 }
 
 .assistant-container {
@@ -635,6 +641,42 @@ body {
   font-size: 11px;
 }
 
+/* Reasoning Details Box (GPT-OSS 120B internal thought stream) */
+.reasoning-details {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.reasoning-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.reasoning-details summary:hover {
+  color: var(--accent);
+}
+
+.reasoning-content {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+}
+
 .assistant-body {
   font-size: 15px;
   line-height: 1.65;
@@ -642,7 +684,6 @@ body {
   word-break: break-word;
 }
 
-/* Markdown styling inside assistant body */
 .assistant-body p {
   margin-bottom: 14px;
 }
@@ -1004,6 +1045,50 @@ body {
   box-shadow: 0 4px 20px var(--accent-soft);
 }
 
+/* Image preview strip above textarea */
+.image-preview-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+
+.preview-thumb-container {
+  position: relative;
+  display: inline-block;
+}
+
+.preview-thumb {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.remove-thumb-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-tag {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .main-textarea {
   width: 100%;
   border: none;
@@ -1034,6 +1119,31 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.attach-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  transition: all 0.15s ease;
+}
+
+.attach-btn:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+.attach-btn.has-image {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: rgba(217, 107, 67, 0.3);
 }
 
 .quiz-quick-pill {

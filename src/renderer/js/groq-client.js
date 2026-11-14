@@ -19,29 +19,46 @@ class GroqClient {
 
     if (!apiKey) {
       if (onError) {
-        onError(new Error('Groq API Key is not set. Please click the Settings gear in the bottom-left to enter your API key.'));
+        onError(new Error('Groq API Key is not set. Please click Settings to configure your key.'));
       }
       return;
     }
 
-    const model = settings.model || 'llama-3.3-70b-versatile';
-    const temperature = parseFloat(settings.temperature) || 0.7;
+    const model = settings.model || 'openai/gpt-oss-120b';
+    const temperature = parseFloat(settings.temperature) ?? 0.7;
     const maxTokens = parseInt(settings.maxTokens, 10) || 4096;
     const systemPrompt = settings.systemPrompt || '';
 
-    // Build payload messages including system prompt if not already present
+    // Build payload messages with multimodal vision support
     const payloadMessages = [];
     if (systemPrompt) {
       payloadMessages.push({ role: 'system', content: systemPrompt });
     }
+
     for (const msg of messages) {
-      payloadMessages.push({ role: msg.role, content: msg.content });
+      if (msg.role === 'user' && msg.imageUrl) {
+        // Multimodal image payload for vision models (e.g. qwen/qwen3.8-27b)
+        const parts = [];
+        if (msg.content && msg.content.trim()) {
+          parts.push({ type: 'text', text: msg.content.trim() });
+        } else {
+          parts.push({ type: 'text', text: 'Analyze and describe this image.' });
+        }
+        parts.push({
+          type: 'image_url',
+          image_url: { url: msg.imageUrl }
+        });
+        payloadMessages.push({ role: 'user', content: parts });
+      } else {
+        payloadMessages.push({ role: msg.role, content: msg.content });
+      }
     }
 
     this.activeController = new AbortController();
     const startTime = performance.now();
     let tokenCount = 0;
     let fullText = '';
+    let fullReasoning = '';
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -98,17 +115,31 @@ class GroqClient {
           try {
             const parsed = JSON.parse(dataStr);
             const delta = parsed.choices?.[0]?.delta;
-            if (delta?.content) {
-              const chunk = delta.content;
-              fullText += chunk;
-              // Rough token estimation: ~4 chars per token
-              tokenCount += Math.max(1, Math.round(chunk.length / 4));
-              
+            if (!delta) continue;
+
+            let chunkContent = '';
+            let chunkReasoning = '';
+
+            // Handle internal reasoning/thinking stream (e.g. gpt-oss-120b)
+            if (delta.reasoning) {
+              chunkReasoning = delta.reasoning;
+              fullReasoning += chunkReasoning;
+              tokenCount += Math.max(1, Math.round(chunkReasoning.length / 4));
+            }
+
+            // Handle primary response stream
+            if (delta.content) {
+              chunkContent = delta.content;
+              fullText += chunkContent;
+              tokenCount += Math.max(1, Math.round(chunkContent.length / 4));
+            }
+
+            if (chunkContent || chunkReasoning) {
               const elapsedSec = (performance.now() - startTime) / 1000;
               const tokensPerSec = elapsedSec > 0.05 ? Math.round(tokenCount / elapsedSec) : 0;
 
               if (onChunk) {
-                onChunk(chunk, fullText);
+                onChunk(chunkContent, fullText, chunkReasoning, fullReasoning);
               }
               if (onMetrics) {
                 onMetrics({
@@ -129,7 +160,7 @@ class GroqClient {
       const finalTokensPerSec = totalElapsedSec > 0 ? Math.round(tokenCount / totalElapsedSec) : 0;
 
       if (onDone) {
-        onDone(fullText, {
+        onDone(fullText, fullReasoning, {
           tokenCount,
           elapsedSec: totalElapsedSec,
           tokensPerSec: finalTokensPerSec,
@@ -140,7 +171,7 @@ class GroqClient {
       if (err.name === 'AbortError') {
         const totalElapsedSec = ((performance.now() - startTime) / 1000).toFixed(1);
         if (onDone) {
-          onDone(fullText, {
+          onDone(fullText, fullReasoning, {
             tokenCount,
             elapsedSec: totalElapsedSec,
             tokensPerSec: 0,

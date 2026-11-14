@@ -4,6 +4,7 @@ class GrauqueApp {
     this.activeConversationId = null;
     this.settings = {};
     this.isGenerating = false;
+    this.currentAttachedImage = null; // base64 data url
 
     this.mdRenderer = new MarkdownRenderer();
     this.quizManager = new QuizManager(this);
@@ -32,8 +33,14 @@ class GrauqueApp {
     this.messagesContainer = document.getElementById('messages-container');
     this.welcomeScreen = document.getElementById('welcome-screen');
 
-    // Input
+    // Input & Image Attachment
+    this.inputBoxCard = document.getElementById('input-box-card');
     this.chatInput = document.getElementById('chat-input');
+    this.imagePreviewStrip = document.getElementById('image-preview-strip');
+    this.imagePreviewImg = document.getElementById('image-preview-img');
+    this.btnRemoveImage = document.getElementById('btn-remove-image');
+    this.btnAttachImage = document.getElementById('btn-attach-image');
+    this.imageFileInput = document.getElementById('image-file-input');
     this.btnQuickQuiz = document.getElementById('btn-quick-quiz');
     this.btnSend = document.getElementById('btn-send');
     this.btnStop = document.getElementById('btn-stop');
@@ -47,6 +54,7 @@ class GrauqueApp {
     this.settingApiKey = document.getElementById('setting-api-key');
     this.btnToggleKeyVisibility = document.getElementById('btn-toggle-key-visibility');
     this.btnTestGroqKey = document.getElementById('btn-test-groq-key');
+    this.btnFetchModels = document.getElementById('btn-fetch-models');
     this.apiTestBadge = document.getElementById('api-test-badge');
     this.settingDefaultModel = document.getElementById('setting-default-model');
     this.settingTemperature = document.getElementById('setting-temperature');
@@ -83,7 +91,6 @@ class GrauqueApp {
       });
     }
 
-    // Check accessibility status
     this.refreshAccessibilityStatus();
   }
 
@@ -93,21 +100,25 @@ class GrauqueApp {
     } else {
       this.settings = {
         apiKey: '',
-        model: 'llama-3.3-70b-versatile',
+        model: 'openai/gpt-oss-120b',
         temperature: 0.7,
         maxTokens: 4096,
         theme: 'system'
       };
     }
+
+    // Default to gpt-oss-120b if old deprecated model was saved
+    if (!this.settings.model || this.settings.model.includes('llama') || this.settings.model.includes('gemma') || this.settings.model.includes('mixtral')) {
+      this.settings.model = 'openai/gpt-oss-120b';
+    }
+
     this.applySettingsToUI();
   }
 
   applySettingsToUI() {
-    // Theme
     const theme = this.settings.theme || 'system';
     document.documentElement.setAttribute('data-theme', theme);
 
-    // API Key status indicator
     const hasKey = Boolean(this.settings.apiKey && this.settings.apiKey.trim());
     if (this.sidebarApiDot) {
       if (hasKey) {
@@ -119,14 +130,31 @@ class GrauqueApp {
       }
     }
 
-    // Top Model Select
     if (this.topModelSelect && this.settings.model) {
+      this.ensureModelInDropdown(this.topModelSelect, this.settings.model);
       this.topModelSelect.value = this.settings.model;
     }
   }
 
+  ensureModelInDropdown(selectEl, modelId) {
+    if (!selectEl) return;
+    let exists = false;
+    for (let i = 0; i < selectEl.options.length; i++) {
+      if (selectEl.options[i].value === modelId) {
+        exists = true;
+        break;
+      }
+    }
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = modelId;
+      opt.textContent = modelId;
+      selectEl.appendChild(opt);
+    }
+  }
+
   bindEvents() {
-    // Sidebar Collapse
+    // Sidebar
     this.btnCollapseSidebar?.addEventListener('click', () => {
       this.sidebar.classList.toggle('collapsed');
     });
@@ -139,7 +167,7 @@ class GrauqueApp {
       this.createNewConversation();
     });
 
-    // Top Model Select change
+    // Model Select change
     this.topModelSelect?.addEventListener('change', (e) => {
       this.settings.model = e.target.value;
       if (window.grauqueApi) {
@@ -162,6 +190,58 @@ class GrauqueApp {
 
     this.btnSend?.addEventListener('click', () => this.handleSend());
     this.btnStop?.addEventListener('click', () => this.handleStop());
+
+    // Image Attachment Events
+    this.btnAttachImage?.addEventListener('click', () => {
+      this.imageFileInput?.click();
+    });
+
+    this.imageFileInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        this.handleFileSelected(file);
+      }
+      this.imageFileInput.value = '';
+    });
+
+    this.btnRemoveImage?.addEventListener('click', () => {
+      this.clearAttachedImage();
+    });
+
+    // Paste Image from Clipboard
+    window.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            this.handleFileSelected(file);
+            break;
+          }
+        }
+      }
+    });
+
+    // Drag and drop image
+    this.inputBoxCard?.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      this.inputBoxCard.style.borderColor = 'var(--accent)';
+    });
+
+    this.inputBoxCard?.addEventListener('dragleave', () => {
+      this.inputBoxCard.style.borderColor = '';
+    });
+
+    this.inputBoxCard?.addEventListener('drop', (e) => {
+      e.preventDefault();
+      this.inputBoxCard.style.borderColor = '';
+      const file = e.dataTransfer?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        this.handleFileSelected(file);
+      }
+    });
 
     // Suggestion cards
     document.querySelectorAll('.suggestion-card').forEach(card => {
@@ -190,6 +270,7 @@ class GrauqueApp {
     this.btnCloseSettings?.addEventListener('click', () => this.closeSettings());
     this.btnCancelSettings?.addEventListener('click', () => this.closeSettings());
     this.btnSaveSettings?.addEventListener('click', () => this.handleSaveSettings());
+    this.btnFetchModels?.addEventListener('click', () => this.handleFetchLiveModels());
 
     this.btnToggleKeyVisibility?.addEventListener('click', () => {
       const type = this.settingApiKey.getAttribute('type');
@@ -234,6 +315,49 @@ class GrauqueApp {
         this.openSettings();
       }
     });
+  }
+
+  handleFileSelected(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      this.setAttachedImage(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  setAttachedImage(dataUrl) {
+    this.currentAttachedImage = dataUrl;
+    if (this.imagePreviewStrip && this.imagePreviewImg) {
+      this.imagePreviewImg.src = dataUrl;
+      this.imagePreviewStrip.style.display = 'flex';
+    }
+    if (this.btnAttachImage) {
+      this.btnAttachImage.classList.add('has-image');
+    }
+
+    // Auto-switch to vision model (qwen/qwen3.8-27b) when image is attached!
+    if (this.topModelSelect && this.topModelSelect.value !== 'qwen/qwen3.8-27b') {
+      this.ensureModelInDropdown(this.topModelSelect, 'qwen/qwen3.8-27b');
+      this.topModelSelect.value = 'qwen/qwen3.8-27b';
+      this.settings.model = 'qwen/qwen3.8-27b';
+      if (window.grauqueApi) {
+        window.grauqueApi.saveSettings(this.settings);
+      }
+    }
+  }
+
+  clearAttachedImage() {
+    this.currentAttachedImage = null;
+    if (this.imagePreviewStrip) {
+      this.imagePreviewStrip.style.display = 'none';
+    }
+    if (this.imagePreviewImg) {
+      this.imagePreviewImg.src = '';
+    }
+    if (this.btnAttachImage) {
+      this.btnAttachImage.classList.remove('has-image');
+    }
   }
 
   async refreshAccessibilityStatus() {
@@ -286,13 +410,14 @@ class GrauqueApp {
       id: 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       title: 'New Conversation',
       messages: [],
-      createdAt: Date.now(),
+      createdAt: Date.now>,
       updatedAt: Date.now()
     };
     this.conversations.unshift(newChat);
     this.saveConversations();
     this.setActiveConversation(newChat.id);
     this.renderHistoryList();
+    this.clearAttachedImage();
     this.chatInput?.focus();
   }
 
@@ -374,8 +499,25 @@ class GrauqueApp {
     row.id = `msg-${idx}`;
 
     if (msg.role === 'user') {
-      row.innerHTML = `<div class="user-bubble">${this.escapeHtml(msg.content)}</div>`;
+      let imageHtml = '';
+      if (msg.imageUrl) {
+        imageHtml = `<img src="${msg.imageUrl}" class="msg-attached-image" alt="Attached image" />`;
+      }
+      row.innerHTML = `<div class="user-bubble">
+        ${imageHtml}
+        <div>${this.escapeHtml(msg.content)}</div>
+      </div>`;
     } else {
+      let reasoningHtml = '';
+      if (msg.reasoning && msg.reasoning.trim()) {
+        reasoningHtml = `
+          <details class="reasoning-details">
+            <summary>💭 Reasoning Process</summary>
+            <div class="reasoning-content">${this.escapeHtml(msg.reasoning)}</div>
+          </details>
+        `;
+      }
+
       const formattedContent = this.mdRenderer.render(msg.content);
       const metricsHtml = msg.metrics
         ? `<span class="meta-speed-badge">⚡ ${msg.metrics.tokensPerSec || 0} t/s • ${msg.metrics.elapsedSec || 0}s</span>`
@@ -390,12 +532,13 @@ class GrauqueApp {
               <span>${msg.model || this.settings.model || 'Groq'}</span>
               ${metricsHtml}
             </div>
+            ${reasoningHtml}
             <div class="assistant-body" id="body-${idx}">${formattedContent}</div>
           </div>
         </div>
       `;
 
-      // Check if there is structured quiz data to render an interactive quiz
+      // Check for structured quiz data
       const quizData = this.quizManager.extractQuizData(msg.content);
       if (quizData) {
         const bodyEl = row.querySelector(`#body-${idx}`);
@@ -407,11 +550,9 @@ class GrauqueApp {
     this.messagesContainer.appendChild(row);
   }
 
-  // Handle Quick Box Input from Option double-tap popup
   handleQuickBoxPrompt(prompt) {
     let activeChat = this.conversations.find(c => c.id === this.activeConversationId);
     if (!activeChat || (activeChat.messages && activeChat.messages.length > 0)) {
-      // Start fresh chat if current has content
       this.createNewConversation();
       activeChat = this.conversations.find(c => c.id === this.activeConversationId);
     }
@@ -420,20 +561,22 @@ class GrauqueApp {
     this.handleSend();
   }
 
-  // Send Message Logic
   async handleSend() {
     const text = this.chatInput.value.trim();
-    if (!text || this.isGenerating) return;
+    const attachedImage = this.currentAttachedImage;
+
+    if ((!text && !attachedImage) || this.isGenerating) return;
 
     const apiKey = (this.settings.apiKey || '').trim();
     if (!apiKey) {
       this.openSettings();
-      alert('Please enter your Groq API key in Settings to begin using Grauque.');
+      alert('Please enter your Groq API key in Settings to begin.');
       return;
     }
 
     this.chatInput.value = '';
     this.chatInput.style.height = 'auto';
+    this.clearAttachedImage();
 
     let chat = this.conversations.find(c => c.id === this.activeConversationId);
     if (!chat) {
@@ -441,31 +584,41 @@ class GrauqueApp {
       chat = this.conversations.find(c => c.id === this.activeConversationId);
     }
 
-    // Auto-title conversation on first message
     if (chat.messages.length === 0) {
-      chat.title = text.length > 36 ? text.substring(0, 36) + '...' : text;
+      const titleSource = text || 'Image Analysis';
+      chat.title = titleSource.length > 36 ? titleSource.substring(0, 36) + '...' : titleSource;
       this.chatTitleDisplay.textContent = chat.title;
       this.renderHistoryList();
     }
 
     // Add user message
-    const userMsg = { role: 'user', content: text, timestamp: Date.now() };
+    const userMsg = {
+      role: 'user',
+      content: text,
+      imageUrl: attachedImage || null,
+      timestamp: Date.now()
+    };
     chat.messages.push(userMsg);
     this.welcomeScreen.style.display = 'none';
     this.appendMessageElement(userMsg, chat.messages.length - 1);
     this.scrollToBottom();
 
-    // Prepare assistant message
+    // Determine model
+    let modelToUse = this.settings.model || 'openai/gpt-oss-120b';
+    if (attachedImage) {
+      modelToUse = 'qwen/qwen3.8-27b';
+    }
+
     const assistantIndex = chat.messages.length;
     const assistantMsg = {
       role: 'assistant',
       content: '',
-      model: this.settings.model || 'llama-3.3-70b-versatile',
+      reasoning: '',
+      model: modelToUse,
       timestamp: Date.now()
     };
     chat.messages.push(assistantMsg);
 
-    // Render assistant placeholder
     const row = document.createElement('div');
     row.className = 'message-row assistant';
     row.id = `msg-${assistantIndex}`;
@@ -478,6 +631,7 @@ class GrauqueApp {
             <span>${assistantMsg.model}</span>
             <span class="meta-speed-badge" id="speed-badge-${assistantIndex}">Streaming...</span>
           </div>
+          <div id="reasoning-wrapper-${assistantIndex}"></div>
           <div class="assistant-body" id="body-${assistantIndex}">
             <span class="typing-cursor">▊</span>
           </div>
@@ -490,13 +644,29 @@ class GrauqueApp {
     this.setGenerating(true);
 
     const bodyEl = document.getElementById(`body-${assistantIndex}`);
+    const reasoningWrapEl = document.getElementById(`reasoning-wrapper-${assistantIndex}`);
     const speedBadgeEl = document.getElementById(`speed-badge-${assistantIndex}`);
 
     await this.groqClient.streamChat({
       messages: chat.messages.slice(0, -1),
-      onChunk: (chunk, fullText) => {
+      onChunk: (chunkContent, fullText, chunkReasoning, fullReasoning) => {
         assistantMsg.content = fullText;
-        bodyEl.innerHTML = this.mdRenderer.render(fullText) + '<span class="typing-cursor">▊</span>';
+        assistantMsg.reasoning = fullReasoning;
+
+        if (fullReasoning && reasoningWrapEl) {
+          reasoningWrapEl.innerHTML = `
+            <details class="reasoning-details" open>
+              <summary>💭 Reasoning Process</summary>
+              <div class="reasoning-content">${this.escapeHtml(fullReasoning)}</div>
+            </details>
+          `;
+        }
+
+        if (fullText) {
+          bodyEl.innerHTML = this.mdRenderer.render(fullText) + '<span class="typing-cursor">▊</span>';
+        } else {
+          bodyEl.innerHTML = '<span class="typing-cursor">▊</span>';
+        }
         this.scrollToBottom();
       },
       onMetrics: (metrics) => {
@@ -507,12 +677,22 @@ class GrauqueApp {
           this.liveSpeedLabel.textContent = `${metrics.tokensPerSec} tokens/s`;
         }
       },
-      onDone: (fullText, finalMetrics) => {
+      onDone: (fullText, fullReasoning, finalMetrics) => {
         assistantMsg.content = fullText;
+        assistantMsg.reasoning = fullReasoning;
         assistantMsg.metrics = finalMetrics;
+
+        if (fullReasoning && reasoningWrapEl) {
+          reasoningWrapEl.innerHTML = `
+            <details class="reasoning-details">
+              <summary>💭 Reasoning Process (Completed)</summary>
+              <div class="reasoning-content">${this.escapeHtml(fullReasoning)}</div>
+            </details>
+          `;
+        }
+
         bodyEl.innerHTML = this.mdRenderer.render(fullText);
 
-        // Render interactive quiz if structured quiz detected!
         const quizData = this.quizManager.extractQuizData(fullText);
         if (quizData) {
           const interactiveQuiz = this.quizManager.renderInteractiveQuiz(quizData, `quiz-widget-${assistantIndex}`);
@@ -590,7 +770,8 @@ class GrauqueApp {
   // Settings Modal Handlers
   openSettings() {
     this.settingApiKey.value = this.settings.apiKey || '';
-    this.settingDefaultModel.value = this.settings.model || 'llama-3.3-70b-versatile';
+    this.ensureModelInDropdown(this.settingDefaultModel, this.settings.model || 'openai/gpt-oss-120b');
+    this.settingDefaultModel.value = this.settings.model || 'openai/gpt-oss-120b';
     this.settingTemperature.value = this.settings.temperature ?? 0.7;
     this.labelTempVal.textContent = this.settingTemperature.value;
     this.settingMaxTokens.value = this.settings.maxTokens ?? 4096;
@@ -623,7 +804,10 @@ class GrauqueApp {
       if (window.grauqueApi) {
         const result = await window.grauqueApi.testGroqKey(key);
         if (result.success) {
-          this.apiTestBadge.innerHTML = `<span style="color:#10b981; font-weight:600;">✓ Connected (${result.modelCount} models available)</span>`;
+          this.apiTestBadge.innerHTML = `<span style="color:#10b981; font-weight:600;">✓ Connected (${result.modelCount} models verified)</span>`;
+          if (Array.isArray(result.models) && result.models.length > 0) {
+            this.updateModelDropdowns(result.models);
+          }
         } else {
           this.apiTestBadge.innerHTML = `<span style="color:#ef4444;">✗ Failed: ${this.escapeHtml(result.error)}</span>`;
         }
@@ -634,6 +818,63 @@ class GrauqueApp {
       this.btnTestGroqKey.textContent = 'Test Key';
       this.btnTestGroqKey.disabled = false;
     }
+  }
+
+  async handleFetchLiveModels() {
+    const key = this.settingApiKey.value.trim();
+    if (!key) {
+      alert('Please enter your Groq API key first.');
+      return;
+    }
+    this.btnFetchModels.textContent = 'Fetching...';
+    this.btnFetchModels.disabled = true;
+
+    try {
+      if (window.grauqueApi) {
+        const result = await window.grauqueApi.testGroqKey(key);
+        if (result.success && Array.isArray(result.models)) {
+          this.updateModelDropdowns(result.models);
+          alert(`Successfully fetched ${result.models.length} active models from Groq.`);
+        } else {
+          alert('Failed to fetch models: ' + (result.error || 'Unknown error'));
+        }
+      }
+    } catch (e) {
+      alert('Error fetching models: ' + e.message);
+    } finally {
+      this.btnFetchModels.textContent = 'Fetch Latest Models';
+      this.btnFetchModels.disabled = false;
+    }
+  }
+
+  updateModelDropdowns(modelsList) {
+    const dropdowns = [this.topModelSelect, this.settingDefaultModel];
+    dropdowns.forEach(selectEl => {
+      if (!selectEl) return;
+      const currentVal = selectEl.value;
+      selectEl.innerHTML = '';
+
+      modelsList.forEach(modelId => {
+        const opt = document.createElement('option');
+        opt.value = modelId;
+        if (modelId === 'openai/gpt-oss-120b') {
+          opt.textContent = 'OpenAI GPT-OSS 120B (Reasoning • Default)';
+        } else if (modelId === 'qwen/qwen3.8-27b') {
+          opt.textContent = 'Qwen 3.8 27B (Vision & Image Support)';
+        } else if (modelId === 'openai/gpt-oss-20b') {
+          opt.textContent = 'OpenAI GPT-OSS 20B (Fast)';
+        } else {
+          opt.textContent = modelId;
+        }
+        selectEl.appendChild(opt);
+      });
+
+      if (modelsList.includes(currentVal)) {
+        selectEl.value = currentVal;
+      } else {
+        selectEl.value = 'openai/gpt-oss-120b';
+      }
+    });
   }
 
   async handleSaveSettings() {
