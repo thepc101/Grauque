@@ -107,7 +107,8 @@ function createQuickPromptWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     show: false,
-    hasShadow: true,
+    hasShadow: false,
+    roundedCorners: false,
     backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
