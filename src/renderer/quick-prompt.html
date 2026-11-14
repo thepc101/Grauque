@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Grauque Quick Prompt</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-app-region: no-drag;
+    }
+
+    body {
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 12px;
+    }
+
+    .quick-box {
+      width: 100%;
+      background: rgba(251, 249, 245, 0.94);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border-radius: 18px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(217, 107, 67, 0.25);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-app-region: drag;
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(-6px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      -webkit-app-region: no-drag;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #d96b43, #b24d27);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 20px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(217, 107, 67, 0.3);
+    }
+
+    input[type="text"] {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 18px;
+      color: #1f1e1d;
+      font-weight: 450;
+      letter-spacing: -0.2px;
+    }
+
+    input[type="text"]::placeholder {
+      color: #8c8983;
+      font-weight: 400;
+    }
+
+    .footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+      padding-top: 10px;
+      font-size: 12px;
+      color: #7d7a74;
+      -webkit-app-region: no-drag;
+    }
+
+    .pill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      background: rgba(217, 107, 67, 0.1);
+      color: #c15f3c;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .shortcuts-hint {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .kbd-chip {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      color: #4f4c46;
+    }
+
+    /* Dark mode adapt */
+    @media (prefers-color-scheme: dark) {
+      .quick-box {
+        background: rgba(28, 28, 27, 0.94);
+        box-shadow: 0 24px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(217, 107, 67, 0.3);
+      }
+      input[type="text"] {
+        color: #f5f3ef;
+      }
+      input[type="text"]::placeholder {
+        color: #73706a;
+      }
+      .footer-row {
+        border-top-color: rgba(255, 255, 255, 0.08);
+        color: #9c9992;
+      }
+      .kbd-chip {
+        background: rgba(255, 255, 255, 0.1);
+        color: #e0ded9;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quick-box">
+    <div class="input-row">
+      <div class="brand-icon">G</div>
+      <input type="text" id="prompt-input" placeholder="Ask Grauque anything..." autofocus spellcheck="false" autocomplete="off" />
+    </div>
+    <div class="footer-row">
+      <span class="pill-tag">⚡ Groq High-Speed</span>
+      <div class="shortcuts-hint">
+        <span>Press <span class="kbd-chip">↵ Enter</span> to ask in Grauque</span>
+        <span><span class="kbd-chip">Esc</span> dismiss</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/quick-prompt.js"></script>
+</body>
+</html>

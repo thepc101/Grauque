@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+<head>
+  <meta charset="UTF-8">
+  <title>Grauque</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="vendor/prism-tomorrow.css">
+  <link rel="stylesheet" href="css/claude.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Collapsible Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-title-row">
+          <div class="brand-logo-small">G</div>
+          <span class="brand-name">Grauque</span>
+        </div>
+        <button class="collapse-sidebar-btn" id="btn-collapse-sidebar" title="Collapse Sidebar (⌘B)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="9" y1="3" x2="9" y2="21"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="new-chat-btn" id="btn-new-chat">
+          <div class="btn-left">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Chat</span>
+          </div>
+          <span class="shortcut-badge">⌘K</span>
+        </button>
+
+        <button class="quiz-studio-btn" id="btn-open-quiz-studio">
+          <span>🎓</span>
+          <span>Quiz Studio</span>
+        </button>
+      </div>
+
+      <div class="sidebar-history" id="chat-history-list">
+        <div class="history-section-title">Recent Conversations</div>
+        <!-- Dynamically populated -->
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="settings-btn" id="btn-open-settings">
+          <span class="api-status-dot" id="sidebar-api-dot" title="Groq API Status"></span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+        <span class="hotkey-pill" title="Double-tap Option or press ⌥Space to summon popup">Double ⌥</span>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <button class="sidebar-toggle-btn" id="btn-toggle-sidebar" title="Toggle Sidebar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+          </button>
+          <h2 class="chat-title-display" id="chat-title-display">New Conversation</h2>
+        </div>
+
+        <div class="top-bar-right">
+          <select class="model-selector-dropdown" id="top-model-select">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
+            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B (Reasoning)</option>
+            <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k)</option>
+            <option value="gemma2-9b-it">Gemma 2 9B</option>
+          </select>
+          <button class="top-action-btn" id="btn-export-chat" title="Export conversation to Markdown">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Export</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Message Feed -->
+      <section class="messages-container" id="messages-container">
+        <!-- Empty State / Welcome -->
+        <div class="welcome-screen" id="welcome-screen">
+          <div class="welcome-logo">G</div>
+          <h1 class="welcome-title">What would you like to explore today?</h1>
+          <p class="welcome-subtitle">Powered by Groq's high-speed inference engine. Ask questions, build interactive quizzes, brainstorm, or write code.</p>
+          
+          <div class="welcome-suggestions">
+            <div class="suggestion-card" data-prompt="Create an interactive 5-question quiz on World History with multiple-choice questions and explanations.">
+              <span class="card-icon">🎓</span>
+              <span class="card-title">Interactive History Quiz</span>
+              <span class="card-desc">Test your knowledge with self-grading questions</span>
+            </div>
+            <div class="suggestion-card" data-prompt="Explain how neural networks learn via backpropagation and gradient descent in simple terms with an intuitive analogy.">
+              <span class="card-icon">💡</span>
+              <span class="card-title">Explain AI Concepts</span>
+              <span class="card-desc">Break down neural networks & backpropagation</span>
+            </div>
+            <div class="suggestion-card" data-prompt="Write a production-ready LRU Cache implementation in Python with clean type hints, unit tests, and asymptotic complexity analysis.">
+              <span class="card-icon">⚡</span>
+              <span class="card-title">Python LRU Cache</span>
+              <span class="card-desc">Clean implementation with tests and complexity</span>
+            </div>
+            <div class="suggestion-card" data-prompt="Draft a persuasive, articulate email proposing an AI productivity pilot project to leadership.">
+              <span class="card-icon">✍️</span>
+              <span class="card-title">Executive Pitch</span>
+              <span class="card-desc">Draft a compelling email to team leaders</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bottom Prompt Input -->
+      <footer class="input-area">
+        <div class="input-box-card">
+          <textarea class="main-textarea" id="chat-input" placeholder="Ask Grauque anything... (Shift+Enter for newline, Enter to send)" rows="1"></textarea>
+          <div class="input-toolbar">
+            <div class="toolbar-left">
+              <button class="quiz-quick-pill" id="btn-quick-quiz">
+                <span>🎓</span>
+                <span>Generate Quiz</span>
+              </button>
+            </div>
+            <div class="toolbar-right">
+              <span class="live-speed-label" id="live-speed-label"></span>
+              <button class="send-btn" id="btn-send" title="Send (Enter)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+              <button class="stop-btn" id="btn-stop" style="display:none;" title="Stop generation">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Grauque Settings</h3>
+        <button class="modal-close-btn" id="btn-close-settings">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- API Key Section -->
+        <div class="form-group">
+          <label class="form-label" for="setting-api-key">
+            <span>Groq API Key</span>
+            <span id="api-test-badge" style="font-size:12px; font-weight:normal;"></span>
+          </label>
+          <div class="input-with-action">
+            <input type="password" class="form-input" id="setting-api-key" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
+            <button class="btn-secondary" id="btn-toggle-key-visibility">Show</button>
+            <button class="btn-secondary" id="btn-test-groq-key">Test Key</button>
+          </div>
+          <div class="form-hint">
+            Get your free Groq API key from <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent);">console.groq.com/keys</a>. Keys are stored locally on your Mac.
+          </div>
+        </div>
+
+        <!-- Model Selection -->
+        <div class="form-group">
+          <label class="form-label" for="setting-default-model">Default Model</label>
+          <select class="form-input" id="setting-default-model">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile) — Recommended, high capability, 128k context</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant) — Ultra fast response</option>
+            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B (Reasoning) — Step-by-step logic</option>
+            <option value="mixtral-8x7b-32768">Mixtral 8x7B (32k context)</option>
+            <option value="gemma2-9b-it">Gemma 2 9B (Google)</option>
+          </select>
+        </div>
+
+        <!-- Temperature & Tokens -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label">
+              <span>Temperature</span>
+              <span id="label-temp-val" style="color:var(--accent);">0.7</span>
+            </label>
+            <input type="range" id="setting-temperature" min="0" max="1.5" step="0.1" value="0.7" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <span>Max Tokens</span>
+              <span id="label-tokens-val" style="color:var(--accent);">4096</span>
+            </label>
+            <input type="range" id="setting-max-tokens" min="512" max="8192" step="256" value="4096" />
+          </div>
+        </div>
+
+        <!-- System Prompt -->
+        <div class="form-group">
+          <label class="form-label" for="setting-system-prompt">System Prompt</label>
+          <textarea class="form-input" id="setting-system-prompt" rows="3"></textarea>
+        </div>
+
+        <!-- Shortcuts & Permissions -->
+        <div class="form-group">
+          <div class="toggle-row">
+            <div>
+              <div style="font-weight:600; font-size:14px;">Double-tap Option Key Popup</div>
+              <div class="form-hint">Tapping Option (⌥) twice brings up the quick question box from anywhere</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-enable-double-opt" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row">
+            <div>
+              <div style="font-weight:600; font-size:14px;">Global Shortcut (⌥Space)</div>
+              <div class="form-hint">Universal fallback shortcut that works without extra permissions</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="setting-enable-opt-space" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding:10px 14px; background:var(--bg-sidebar); border-radius:var(--radius-sm);">
+            <div>
+              <div style="font-size:13px; font-weight:600;">macOS Accessibility Permission</div>
+              <div class="form-hint" id="ax-status-desc">Required for system-wide Double-tap Option detection</div>
+            </div>
+            <button class="btn-secondary" id="btn-request-ax" style="font-size:12px;">Grant / Check</button>
+          </div>
+        </div>
+
+        <!-- Theme Selection -->
+        <div class="form-group">
+          <label class="form-label" for="setting-theme">Appearance Theme</label>
+          <select class="form-input" id="setting-theme">
+            <option value="system">System (Automatic)</option>
+            <option value="light">Claude Paper (Warm Light)</option>
+            <option value="dark">Claude Obsidian (Dark)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-cancel-settings">Cancel</button>
+        <button class="btn-primary" id="btn-save-settings">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Studio Modal -->
+  <div class="modal-overlay" id="quiz-studio-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">🎓 Interactive Quiz Studio</h3>
+        <button class="modal-close-btn" id="btn-close-quiz-studio">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="quiz-topic">Quiz Topic or Subject</label>
+          <input type="text" class="form-input" id="quiz-topic" placeholder="e.g. Quantum Computing, French Revolution, Python Data Structures..." />
+          <div class="form-hint">Enter any subject, exam topic, book, or technical concept you want to be quizzed on.</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label" for="quiz-difficulty">Difficulty Level</label>
+            <select class="form-input" id="quiz-difficulty">
+              <option value="Beginner">Beginner (Foundations)</option>
+              <option value="Intermediate" selected>Intermediate (Applied)</option>
+              <option value="Advanced">Advanced (Expert)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="quiz-count">Number of Questions</label>
+            <select class="form-input" id="quiz-count">
+              <option value="3">3 Questions (Quick check)</option>
+              <option value="5" selected>5 Questions (Standard)</option>
+              <option value="10">10 Questions (In-depth)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-cancel-quiz">Cancel</button>
+        <button class="btn-primary" id="btn-generate-quiz">Generate & Start Quiz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="vendor/markdown-it.min.js"></script>
+  <script src="vendor/prism.js"></script>
+  <script src="js/markdown-renderer.js"></script>
+  <script src="js/quiz-manager.js"></script>
+  <script src="js/groq-client.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
