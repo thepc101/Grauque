@@ -410,7 +410,7 @@ class GrauqueApp {
       id: 'chat_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
       title: 'New Conversation',
       messages: [],
-      createdAt: Date.now>,
+      createdAt: Date.now(),
       updatedAt: Date.now()
     };
     this.conversations.unshift(newChat);
@@ -512,7 +512,14 @@ class GrauqueApp {
       if (msg.reasoning && msg.reasoning.trim()) {
         reasoningHtml = `
           <details class="reasoning-details">
-            <summary>💭 Reasoning Process</summary>
+            <summary>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:5px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Reasoning Analysis
+            </summary>
             <div class="reasoning-content">${this.escapeHtml(msg.reasoning)}</div>
           </details>
         `;
@@ -520,7 +527,7 @@ class GrauqueApp {
 
       const formattedContent = this.mdRenderer.render(msg.content);
       const metricsHtml = msg.metrics
-        ? `<span class="meta-speed-badge">⚡ ${msg.metrics.tokensPerSec || 0} t/s • ${msg.metrics.elapsedSec || 0}s</span>`
+        ? `<span class="meta-speed-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>${msg.metrics.tokensPerSec || 0} t/s • ${msg.metrics.elapsedSec || 0}s</span>`
         : '';
 
       row.innerHTML = `
@@ -656,7 +663,14 @@ class GrauqueApp {
         if (fullReasoning && reasoningWrapEl) {
           reasoningWrapEl.innerHTML = `
             <details class="reasoning-details" open>
-              <summary>💭 Reasoning Process</summary>
+              <summary>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:5px;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Reasoning Analysis
+              </summary>
               <div class="reasoning-content">${this.escapeHtml(fullReasoning)}</div>
             </details>
           `;
@@ -671,7 +685,7 @@ class GrauqueApp {
       },
       onMetrics: (metrics) => {
         if (speedBadgeEl) {
-          speedBadgeEl.textContent = `⚡ ${metrics.tokensPerSec} t/s • ${metrics.elapsedSec}s`;
+          speedBadgeEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>${metrics.tokensPerSec} t/s • ${metrics.elapsedSec}s`;
         }
         if (this.liveSpeedLabel) {
           this.liveSpeedLabel.textContent = `${metrics.tokensPerSec} tokens/s`;
@@ -685,7 +699,14 @@ class GrauqueApp {
         if (fullReasoning && reasoningWrapEl) {
           reasoningWrapEl.innerHTML = `
             <details class="reasoning-details">
-              <summary>💭 Reasoning Process (Completed)</summary>
+              <summary>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:5px;">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                Reasoning Analysis (Completed)
+              </summary>
               <div class="reasoning-content">${this.escapeHtml(fullReasoning)}</div>
             </details>
           `;
@@ -700,7 +721,7 @@ class GrauqueApp {
         }
 
         if (speedBadgeEl) {
-          speedBadgeEl.textContent = `⚡ ${finalMetrics.tokensPerSec} t/s • ${finalMetrics.elapsedSec}s`;
+          speedBadgeEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>${finalMetrics.tokensPerSec} t/s • ${finalMetrics.elapsedSec}s`;
         }
 
         this.setGenerating(false);

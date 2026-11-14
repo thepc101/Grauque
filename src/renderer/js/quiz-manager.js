@@ -66,7 +66,13 @@ Please format the response in two parts:
     header.className = 'quiz-header';
     header.innerHTML = `
       <div class="quiz-title-row">
-        <span class="quiz-badge">🎓 Interactive Quiz</span>
+        <span class="quiz-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          Assessment
+        </span>
         <span class="quiz-difficulty">${quizData.difficulty || 'General'}</span>
       </div>
       <h3 class="quiz-main-title">${this.escapeHtml(quizData.title || 'Knowledge Check')}</h3>
@@ -115,36 +121,30 @@ Please format the response in two parts:
             optBtn.classList.add('correct');
           } else {
             optBtn.classList.add('incorrect');
-            // highlight the right answer
             const buttons = optionsGrid.querySelectorAll('.quiz-opt-btn');
             if (buttons[q.answerIndex]) {
               buttons[q.answerIndex].classList.add('correct-revealed');
             }
           }
 
-          // Disable options
           optionsGrid.querySelectorAll('.quiz-opt-btn').forEach(b => b.disabled = true);
-
-          // Show explanation
           explanationBox.style.display = 'block';
 
-          // Update header
           const answeredEl = document.getElementById(`${container.id}-answered`);
           const scoreEl = document.getElementById(`${container.id}-score`);
           if (answeredEl) answeredEl.textContent = answeredCount;
           if (scoreEl) scoreEl.textContent = score;
 
-          // Check if finished
           if (answeredCount === totalQuestions) {
             summaryBox.style.display = 'block';
             const pct = Math.round((score / totalQuestions) * 100);
             summaryScore.textContent = `${score} / ${totalQuestions} (${pct}%)`;
             if (pct >= 80) {
-              summaryFeedback.textContent = '🌟 Outstanding mastery! Excellent understanding of the material.';
+              summaryFeedback.textContent = 'Outstanding mastery of the subject matter.';
             } else if (pct >= 60) {
-              summaryFeedback.textContent = '👍 Good job! Review the explanations above to strengthen your knowledge.';
+              summaryFeedback.textContent = 'Solid understanding. Review the explanations above for missed concepts.';
             } else {
-              summaryFeedback.textContent = '📚 Keep practicing! Re-read the takeaways and try again.';
+              summaryFeedback.textContent = 'Review the key takeaways and try the assessment again to reinforce learning.';
             }
           }
         });
@@ -158,7 +158,14 @@ Please format the response in two parts:
       explanationBox.className = 'quiz-explanation-box';
       explanationBox.style.display = 'none';
       explanationBox.innerHTML = `
-        <div class="exp-title">💡 Explanation:</div>
+        <div class="exp-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:4px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          Explanation:
+        </div>
         <div class="exp-text">${this.escapeHtml(q.explanation || 'No explanation provided.')}</div>
       `;
       qCard.appendChild(explanationBox);
@@ -172,10 +179,22 @@ Please format the response in two parts:
     summaryBox.className = 'quiz-summary-box';
     summaryBox.style.display = 'none';
     summaryBox.innerHTML = `
-      <div class="summary-congrats">🎉 Quiz Completed!</div>
+      <div class="summary-congrats">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px; color:#10b981;">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        Assessment Completed
+      </div>
       <div class="summary-score-large" id="${container.id}-final-score"></div>
       <div class="summary-feedback" id="${container.id}-feedback"></div>
-      <button class="retake-quiz-btn" id="${container.id}-retake">🔄 Retake This Quiz</button>
+      <button class="retake-quiz-btn" id="${container.id}-retake">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:5px;">
+          <polyline points="1 4 1 10 7 10"></polyline>
+          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+        </svg>
+        Retake Assessment
+      </button>
     `;
     container.appendChild(summaryBox);
 
@@ -184,7 +203,6 @@ Please format the response in two parts:
     const retakeBtn = summaryBox.querySelector(`#${container.id}-retake`);
 
     retakeBtn.addEventListener('click', () => {
-      // Re-render
       const newEl = this.renderInteractiveQuiz(quizData, containerId);
       container.replaceWith(newEl);
     });

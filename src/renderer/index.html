@@ -13,7 +13,18 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-title-row">
-          <div class="brand-logo-small">G</div>
+          <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
+            <rect width="48" height="48" rx="12" fill="url(#sb_logo_grad)"/>
+            <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+            <path d="M 33 18 C 30.5 13.5 24 12 18.5 15 C 13 18 11.5 25 14.5 30.5 C 17.5 36 24.5 37.5 30 34.5 C 33.5 32.5 35 29 35 26 L 24 26" stroke="#FAF8F5" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="24" cy="26" r="2.2" fill="#FAF8F5"/>
+            <defs>
+              <linearGradient id="sb_logo_grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#E2744D"/>
+                <stop offset="100%" stop-color="#9C3E1B"/>
+              </linearGradient>
+            </defs>
+          </svg>
           <span class="brand-name">Grauque</span>
         </div>
         <button class="collapse-sidebar-btn" id="btn-collapse-sidebar" title="Collapse Sidebar (⌘B)">
@@ -27,7 +38,7 @@
       <div class="sidebar-actions">
         <button class="new-chat-btn" id="btn-new-chat">
           <div class="btn-left">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
@@ -37,14 +48,17 @@
         </button>
 
         <button class="quiz-studio-btn" id="btn-open-quiz-studio">
-          <span>🎓</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
           <span>Quiz Studio</span>
         </button>
       </div>
 
       <div class="sidebar-history" id="chat-history-list">
         <div class="history-section-title">Recent Conversations</div>
-        <!-- Dynamically populated -->
+        <!-- Populated via app.js -->
       </div>
 
       <div class="sidebar-footer">
@@ -95,29 +109,56 @@
       <section class="messages-container" id="messages-container">
         <!-- Empty State / Welcome -->
         <div class="welcome-screen" id="welcome-screen">
-          <div class="welcome-logo">G</div>
+          <div class="welcome-logo">
+            <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+              <path d="M 33 18 C 30.5 13.5 24 12 18.5 15 C 13 18 11.5 25 14.5 30.5 C 17.5 36 24.5 37.5 30 34.5 C 33.5 32.5 35 29 35 26 L 24 26" stroke="#FAF8F5" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="24" cy="26" r="2.8" fill="#FAF8F5"/>
+            </svg>
+          </div>
           <h1 class="welcome-title">What would you like to explore today?</h1>
           <p class="welcome-subtitle">Powered by Groq's high-speed inference engine. Ask questions, analyze images, build interactive quizzes, or write code.</p>
           
           <div class="welcome-suggestions">
             <div class="suggestion-card" data-prompt="Create an interactive 5-question quiz on World History with multiple-choice questions and explanations.">
-              <span class="card-icon">🎓</span>
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+              </span>
               <span class="card-title">Interactive History Quiz</span>
               <span class="card-desc">Test your knowledge with self-grading questions</span>
             </div>
             <div class="suggestion-card" data-prompt="Explain how neural networks learn via backpropagation and gradient descent in simple terms with an intuitive analogy.">
-              <span class="card-icon">💡</span>
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="9" y1="18" x2="15" y2="18"></line>
+                  <line x1="10" y1="22" x2="14" y2="22"></line>
+                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
+                </svg>
+              </span>
               <span class="card-title">Explain AI Concepts</span>
               <span class="card-desc">Deep reasoning via GPT-OSS 120B</span>
             </div>
             <div class="suggestion-card" data-prompt="Attach an image and ask Qwen 3.8 Vision to extract text, analyze diagrams, or describe what is happening.">
-              <span class="card-icon">🖼️</span>
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </span>
               <span class="card-title">Qwen 3.8 Vision</span>
               <span class="card-desc">Upload images for instant visual reasoning</span>
             </div>
             <div class="suggestion-card" data-prompt="Write a production-ready LRU Cache implementation in Python with clean type hints, unit tests, and asymptotic complexity analysis.">
-              <span class="card-icon">⚡</span>
-              <span class="card-title">Python Code & Architecture</span>
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"></polyline>
+                  <polyline points="8 6 2 12 8 18"></polyline>
+                </svg>
+              </span>
+              <span class="card-title">Python Architecture</span>
               <span class="card-desc">Clean implementation with tests and complexity</span>
             </div>
           </div>
@@ -151,7 +192,10 @@
               <input type="file" id="image-file-input" accept="image/*" style="display:none;" />
 
               <button class="quiz-quick-pill" id="btn-quick-quiz">
-                <span>🎓</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
                 <span>Generate Quiz</span>
               </button>
             </div>
@@ -293,7 +337,13 @@
   <div class="modal-overlay" id="quiz-studio-modal">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3 class="modal-title">🎓 Interactive Quiz Studio</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <h3 class="modal-title">Interactive Quiz Studio</h3>
+        </div>
         <button class="modal-close-btn" id="btn-close-quiz-studio">&times;</button>
       </div>
 
