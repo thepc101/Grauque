@@ -33,7 +33,7 @@
           ]
         }
       ],
-      "icon": "build/icon.png",
+      "icon": "build/icon.icns",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "darkModeSupport": true,

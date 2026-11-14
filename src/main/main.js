@@ -17,8 +17,8 @@ const defaultSettings = {
   apiKey: '',
   model: 'openai/gpt-oss-120b',
   temperature: 0.7,
-  maxTokens: 4096,
-  systemPrompt: 'You are Grauque, an exceptionally capable, articulate, and thoughtful AI assistant powered by Groq. Provide well-structured, insightful responses using GitHub-flavored Markdown. When asked for quizzes, produce clear, engaging interactive questions with multiple choice options and detailed explanations.',
+  maxTokens: 800,
+  systemPrompt: 'You are Grauque, an exceptionally capable and efficient AI assistant powered by Groq. Be direct, concise, and focused. Avoid unnecessary filler or overly verbose preamble. Provide thorough depth only when explicitly requested.',
   enableDoubleOption: true,
   enableOptionSpace: true,
   theme: 'system'

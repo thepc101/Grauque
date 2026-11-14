@@ -11,6 +11,12 @@ class GroqClient {
     }
   }
 
+  isVisionModel(model) {
+    if (!model) return false;
+    const lower = model.toLowerCase();
+    return lower.includes('qwen') || lower.includes('vision');
+  }
+
   async streamChat({ messages, onChunk, onMetrics, onDone, onError }) {
     this.cancelActiveRequest();
 
@@ -26,31 +32,48 @@ class GroqClient {
 
     const model = settings.model || 'openai/gpt-oss-120b';
     const temperature = parseFloat(settings.temperature) ?? 0.7;
-    const maxTokens = parseInt(settings.maxTokens, 10) || 4096;
-    const systemPrompt = settings.systemPrompt || '';
+    const isVision = this.isVisionModel(model);
 
-    // Build payload messages with multimodal vision support
+    // Enforce efficient token caps to prevent OTPM limit exhaustion (e.g. Qwen 1000 OTPM limit)
+    let maxTokens = parseInt(settings.maxTokens, 10) || 800;
+    if (isVision) {
+      maxTokens = Math.min(maxTokens, 550); // safe cap for Qwen 1000 OTPM limit
+    } else {
+      maxTokens = Math.min(maxTokens, 1000); // concise answers for text models
+    }
+
+    const systemPrompt = settings.systemPrompt || 
+      'You are Grauque, an exceptionally capable and efficient AI assistant. Be direct, concise, and focused. Avoid unnecessary filler, repetition, or overly verbose preamble. Provide thorough depth only when explicitly asked.';
+
+    // Keep only the most recent 6 messages to minimize token usage and latency
+    const recentMessages = messages.slice(-6);
+
     const payloadMessages = [];
     if (systemPrompt) {
       payloadMessages.push({ role: 'system', content: systemPrompt });
     }
 
-    for (const msg of messages) {
-      if (msg.role === 'user' && msg.imageUrl) {
-        // Multimodal image payload for vision models (e.g. qwen/qwen3.8-27b)
+    const lastMsgIndex = recentMessages.length - 1;
+
+    for (let i = 0; i < recentMessages.length; i++) {
+      const msg = recentMessages[i];
+      const isCurrentTurn = (i === lastMsgIndex);
+
+      if (msg.role === 'user' && msg.imageUrl && isCurrentTurn && isVision) {
         const parts = [];
-        if (msg.content && msg.content.trim()) {
-          parts.push({ type: 'text', text: msg.content.trim() });
-        } else {
-          parts.push({ type: 'text', text: 'Analyze and describe this image.' });
-        }
+        const textContent = (msg.content && msg.content.trim()) ? msg.content.trim() : 'Describe and analyze this image concisely.';
+        parts.push({ type: 'text', text: textContent });
         parts.push({
           type: 'image_url',
           image_url: { url: msg.imageUrl }
         });
         payloadMessages.push({ role: 'user', content: parts });
       } else {
-        payloadMessages.push({ role: msg.role, content: msg.content });
+        const textContent = (typeof msg.content === 'string') ? msg.content : (msg.content?.[0]?.text || '');
+        payloadMessages.push({
+          role: msg.role,
+          content: textContent || (msg.imageUrl ? '[Attached image analyzed above]' : '')
+        });
       }
     }
 
@@ -60,6 +83,17 @@ class GroqClient {
     let fullText = '';
     let fullReasoning = '';
 
+    const payloadBody = {
+      model: model,
+      messages: payloadMessages,
+      temperature: temperature,
+      max_tokens: maxTokens,
+      stream: true
+    };
+
+    const payloadJson = JSON.stringify(payloadBody);
+    console.log(`[Grauque] Sending Groq request for ${model}. Max tokens: ${maxTokens}, Payload size: ${payloadJson.length} bytes`);
+
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -67,13 +101,7 @@ class GroqClient {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({
-          model: model,
-          messages: payloadMessages,
-          temperature: temperature,
-          max_tokens: maxTokens,
-          stream: true
-        }),
+        body: payloadJson,
         signal: this.activeController.signal
       });
 
@@ -101,7 +129,7 @@ class GroqClient {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // keep partial line for next iteration
+        buffer = lines.pop();
 
         for (const line of lines) {
           const trimmed = line.trim();
@@ -120,14 +148,12 @@ class GroqClient {
             let chunkContent = '';
             let chunkReasoning = '';
 
-            // Handle internal reasoning/thinking stream (e.g. gpt-oss-120b)
             if (delta.reasoning) {
               chunkReasoning = delta.reasoning;
               fullReasoning += chunkReasoning;
               tokenCount += Math.max(1, Math.round(chunkReasoning.length / 4));
             }
 
-            // Handle primary response stream
             if (delta.content) {
               chunkContent = delta.content;
               fullText += chunkContent;

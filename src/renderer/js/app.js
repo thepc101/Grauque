@@ -317,13 +317,81 @@ class GrauqueApp {
     });
   }
 
-  handleFileSelected(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      this.setAttachedImage(dataUrl);
-    };
-    reader.readAsDataURL(file);
+  async handleFileSelected(file) {
+    if (!file) return;
+    try {
+      const optimizedDataUrl = await this.compressAndResizeImage(file);
+      this.setAttachedImage(optimizedDataUrl);
+    } catch (err) {
+      console.warn('Image optimization fallback:', err);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.setAttachedImage(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Heavily downscale and compress images to stay well within Groq OTPM/token limits
+  compressAndResizeImage(fileOrDataUrl, maxDimension = 640, quality = 0.70) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.naturalWidth || img.width;
+        let height = img.naturalHeight || img.height;
+
+        // Downscale proportionally if either dimension exceeds maxDimension
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'medium';
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let result = canvas.toDataURL('image/jpeg', quality);
+
+        // Secondary pass if still over 150KB
+        if (result.length > 200000) {
+          const passCanvas = document.createElement('canvas');
+          passCanvas.width = Math.round(width * 0.7);
+          passCanvas.height = Math.round(height * 0.7);
+          const passCtx = passCanvas.getContext('2d');
+          passCtx.fillStyle = '#FFFFFF';
+          passCtx.fillRect(0, 0, passCanvas.width, passCanvas.height);
+          passCtx.drawImage(canvas, 0, 0, passCanvas.width, passCanvas.height);
+          result = passCanvas.toDataURL('image/jpeg', 0.65);
+        }
+
+        resolve(result);
+      };
+
+      img.onerror = (err) => reject(err);
+
+      if (typeof fileOrDataUrl === 'string') {
+        img.src = fileOrDataUrl;
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+        };
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(fileOrDataUrl);
+      }
+    });
   }
 
   setAttachedImage(dataUrl) {
@@ -379,6 +447,18 @@ class GrauqueApp {
       const saved = localStorage.getItem('grauque_conversations');
       if (saved) {
         this.conversations = JSON.parse(saved);
+        // Sanitize historical conversations from oversized raw images
+        if (Array.isArray(this.conversations)) {
+          this.conversations.forEach(c => {
+            if (Array.isArray(c.messages)) {
+              c.messages.forEach(m => {
+                if (m.imageUrl && m.imageUrl.length > 400000) {
+                  m.imageUrl = null; // strip bloated historical raw images
+                }
+              });
+            }
+          });
+        }
       }
     } catch (e) {
       this.conversations = [];
