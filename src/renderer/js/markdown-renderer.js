@@ -7,9 +7,22 @@ class MarkdownRenderer {
       linkify: true,
       typographer: true,
       highlight: (str, lang) => {
-        // If it's quiz-json, we wrap it in a special hidden marker
-        if (lang === 'quiz-json') {
-          return `<pre class="hidden-quiz-data" style="display:none;"><code>${this.escapeHtml(str)}</code></pre>`;
+        // If it's structured JSON (quiz or flashcards), hide raw JSON code block
+        if (lang === 'quiz-json' || lang === 'flashcard-json') {
+          return `<pre class="hidden-structured-data" style="display:none;"><code>${this.escapeHtml(str)}</code></pre>`;
+        }
+
+        // If code block is labeled latex, math, or tex, render directly with KaTeX if available
+        if ((lang === 'latex' || lang === 'math' || lang === 'tex') && window.katex) {
+          try {
+            const mathHtml = window.katex.renderToString(str.trim(), {
+              displayMode: true,
+              throwOnError: false
+            });
+            return `<div class="katex-display-container">${mathHtml}</div>`;
+          } catch (e) {
+            // fallback to code block
+          }
         }
 
         let highlighted = '';
@@ -38,7 +51,65 @@ class MarkdownRenderer {
 
   render(markdownText) {
     if (!markdownText) return '';
-    return this.md.render(markdownText);
+
+    // 1. Clean raw and escaped <br> tags so they don't show as literal text on the screen
+    let text = markdownText
+      .replace(/&lt;br\s*\/?&gt;/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n');
+
+    // 2. Render LaTeX math formulas if KaTeX is available
+    if (window.katex) {
+      const mathPlaceholders = [];
+      const createPlaceholder = (latex, displayMode) => {
+        const id = `%%%KATEX_FORMULA_${mathPlaceholders.length}%%%`;
+        try {
+          const rendered = window.katex.renderToString(latex.trim(), {
+            displayMode: displayMode,
+            throwOnError: false
+          });
+          mathPlaceholders.push({ id, html: rendered });
+        } catch (e) {
+          mathPlaceholders.push({ id, html: `<code>${this.escapeHtml(latex)}</code>` });
+        }
+        return id;
+      };
+
+      // Block math: $$ ... $$
+      text = text.replace(/\$\$([\s\S]+?)\$\$/g, (match, formula) => {
+        return createPlaceholder(formula, true);
+      });
+
+      // Block math: \[ ... \]
+      text = text.replace(/\\\[([\s\S]+?)\\\]/g, (match, formula) => {
+        return createPlaceholder(formula, true);
+      });
+
+      // Inline math: \( ... \)
+      text = text.replace(/\\\(([\s\S]+?)\\\)/g, (match, formula) => {
+        return createPlaceholder(formula, false);
+      });
+
+      // Inline math: $ ... $ (excluding escaped \$ and currency like $50 or $10.99)
+      text = text.replace(/(^|[^\\])\$([^\$\n]+?)\$/g, (match, prefix, formula) => {
+        // Skip if formula looks like a price (e.g. 50 or 10.99)
+        if (/^\d+(\.\d{1,2})?$/.test(formula.trim())) {
+          return match;
+        }
+        return prefix + createPlaceholder(formula, false);
+      });
+
+      // Render markdown
+      let html = this.md.render(text);
+
+      // Restore KaTeX math
+      for (const item of mathPlaceholders) {
+        html = html.split(item.id).join(item.html);
+      }
+
+      return html;
+    }
+
+    return this.md.render(text);
   }
 
   escapeHtml(str) {

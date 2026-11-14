@@ -6,7 +6,7 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
-    "compile-helper": "clang -framework Cocoa -framework ApplicationServices src/main/native/opt-tap-listener.m -o bin/opt-tap-listener",
+    "compile-helper": "clang -framework Cocoa -framework ApplicationServices src/main/native/opt-tap-listener.m -o bin/opt-tap-listener && clang -arch x86_64 -framework Foundation -framework PDFKit -O2 src/main/native/pdf-extract.m -o bin/pdf-extract",
     "pack": "electron-builder --dir",
     "dist": "npm run compile-helper && electron-builder --mac dmg --x64"
   },
@@ -17,6 +17,7 @@
     "electron-builder": "^25.1.8"
   },
   "dependencies": {
+    "katex": "^0.19.1",
     "markdown-it": "^14.1.0",
     "prismjs": "^1.29.0"
   },
@@ -41,6 +42,10 @@
         {
           "from": "bin/opt-tap-listener",
           "to": "bin/opt-tap-listener"
+        },
+        {
+          "from": "bin/pdf-extract",
+          "to": "bin/pdf-extract"
         }
       ],
       "identity": null

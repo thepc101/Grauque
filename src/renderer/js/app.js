@@ -6,8 +6,15 @@ class GrauqueApp {
     this.isGenerating = false;
     this.currentAttachedImage = null; // base64 data url
 
+    // Voice dictation state
+    this.mediaRecorder = null;
+    this.audioChunks = [];
+    this.isRecordingVoice = false;
+    this.voiceStream = null;
+
     this.mdRenderer = new MarkdownRenderer();
     this.quizManager = new QuizManager(this);
+    this.studentStudio = new StudentStudio(this);
     this.groqClient = new GroqClient(() => this.settings);
 
     this.initElements();
@@ -22,6 +29,9 @@ class GrauqueApp {
     this.btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
     this.btnNewChat = document.getElementById('btn-new-chat');
     this.btnOpenQuizStudio = document.getElementById('btn-open-quiz-studio');
+    this.btnOpenFlashcards = document.getElementById('btn-open-flashcards');
+    this.btnOpenStudyGuide = document.getElementById('btn-open-study-guide');
+    this.btnOpenTutor = document.getElementById('btn-open-tutor');
     this.chatHistoryList = document.getElementById('chat-history-list');
     this.btnOpenSettings = document.getElementById('btn-open-settings');
     this.sidebarApiDot = document.getElementById('sidebar-api-dot');
@@ -33,7 +43,7 @@ class GrauqueApp {
     this.messagesContainer = document.getElementById('messages-container');
     this.welcomeScreen = document.getElementById('welcome-screen');
 
-    // Input & Image Attachment
+    // Input & Tools
     this.inputBoxCard = document.getElementById('input-box-card');
     this.chatInput = document.getElementById('chat-input');
     this.imagePreviewStrip = document.getElementById('image-preview-strip');
@@ -41,7 +51,30 @@ class GrauqueApp {
     this.btnRemoveImage = document.getElementById('btn-remove-image');
     this.btnAttachImage = document.getElementById('btn-attach-image');
     this.imageFileInput = document.getElementById('image-file-input');
+
+    // PDF Elements
+    this.btnAttachPdf = document.getElementById('btn-attach-pdf');
+    this.pdfFileInput = document.getElementById('pdf-file-input');
+    this.pdfPreviewStrip = document.getElementById('pdf-preview-strip');
+    this.pdfFileName = document.getElementById('pdf-file-name');
+    this.pdfMetaBadge = document.getElementById('pdf-meta-badge');
+    this.btnRemovePdf = document.getElementById('btn-remove-pdf');
+    this.btnPdfQuickSummarize = document.getElementById('btn-pdf-quick-summarize');
+    this.btnPdfQuickFlashcards = document.getElementById('btn-pdf-quick-flashcards');
+    this.btnPdfQuickQuiz = document.getElementById('btn-pdf-quick-quiz');
+    this.currentAttachedPdf = null;
+
+    // Voice Dictation Elements
+    this.btnMicPrompt = document.getElementById('btn-mic-prompt');
+    this.micStatusLabel = document.getElementById('mic-status-label');
+    this.voiceRecordingBanner = document.getElementById('voice-recording-banner');
+    this.voiceBannerText = document.getElementById('voice-banner-text');
+    this.btnStopVoice = document.getElementById('btn-stop-voice');
+
+    // Quick Action Pills
     this.btnQuickQuiz = document.getElementById('btn-quick-quiz');
+    this.btnQuickFlashcards = document.getElementById('btn-quick-flashcards');
+    this.btnQuickStudyGuide = document.getElementById('btn-quick-study-guide');
     this.btnSend = document.getElementById('btn-send');
     this.btnStop = document.getElementById('btn-stop');
     this.liveSpeedLabel = document.getElementById('live-speed-label');
@@ -76,11 +109,49 @@ class GrauqueApp {
     this.quizTopic = document.getElementById('quiz-topic');
     this.quizDifficulty = document.getElementById('quiz-difficulty');
     this.quizCount = document.getElementById('quiz-count');
+
+    // Flashcard Modal
+    this.flashcardModal = document.getElementById('flashcard-modal');
+    this.btnCloseFlashcards = document.getElementById('btn-close-flashcards');
+    this.btnCancelFlashcards = document.getElementById('btn-cancel-flashcards');
+    this.btnGenerateFlashcards = document.getElementById('btn-generate-flashcards');
+    this.flashcardTopic = document.getElementById('flashcard-topic');
+    this.flashcardCount = document.getElementById('flashcard-count');
+    this.flashcardFocus = document.getElementById('flashcard-focus');
+
+    // Study Guide Modal
+    this.studyGuideModal = document.getElementById('study-guide-modal');
+    this.btnCloseStudyGuide = document.getElementById('btn-close-study-guide');
+    this.btnCancelStudyGuide = document.getElementById('btn-cancel-study-guide');
+    this.btnGenerateStudyGuide = document.getElementById('btn-generate-study-guide');
+    this.studyGuideTopic = document.getElementById('study-guide-topic');
+    this.studyGuideNotes = document.getElementById('study-guide-notes');
+
+    // Socratic Tutor Modal
+    this.tutorModal = document.getElementById('tutor-modal');
+    this.btnCloseTutor = document.getElementById('btn-close-tutor');
+    this.btnCancelTutor = document.getElementById('btn-cancel-tutor');
+    this.btnGenerateTutor = document.getElementById('btn-generate-tutor');
+    this.tutorProblem = document.getElementById('tutor-problem');
+    this.tutorStyle = document.getElementById('tutor-style');
+
+    // Memory Modal Elements
+    this.memoryManager = new MemoryManager(this);
+    this.btnOpenMemory = document.getElementById('btn-open-memory');
+    this.memoryModal = document.getElementById('memory-modal');
+    this.btnCloseMemory = document.getElementById('btn-close-memory');
+    this.btnDoneMemory = document.getElementById('btn-done-memory');
+    this.settingEnableMemory = document.getElementById('setting-enable-memory');
+    this.inputNewMemory = document.getElementById('input-new-memory');
+    this.btnAddMemory = document.getElementById('btn-add-memory');
+    this.btnClearMemories = document.getElementById('btn-clear-memories');
+    this.memoryItemsContainer = document.getElementById('memory-items-container');
   }
 
   async init() {
     await this.loadSettings();
     this.loadConversations();
+    this.memoryManager.updateMemoryBadge();
 
     // Listen for prompt submitted from the double-tap Option quick-box!
     if (window.grauqueApi && window.grauqueApi.onPromptFromQuickBox) {
@@ -208,12 +279,58 @@ class GrauqueApp {
       this.clearAttachedImage();
     });
 
-    // Paste Image from Clipboard
+    // PDF Attachment Events
+    this.btnAttachPdf?.addEventListener('click', async () => {
+      if (window.grauqueApi && window.grauqueApi.pickPdfFile) {
+        try {
+          const picked = await window.grauqueApi.pickPdfFile();
+          if (picked && picked.success) {
+            this.handleParsedPdfResult(picked);
+            return;
+          }
+        } catch (e) {
+          console.warn('Native PDF picker fallback to file input:', e);
+        }
+      }
+      this.pdfFileInput?.click();
+    });
+
+    this.pdfFileInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        this.handlePdfSelected(file);
+      }
+      this.pdfFileInput.value = '';
+    });
+
+    this.btnRemovePdf?.addEventListener('click', () => {
+      this.clearAttachedPdf();
+    });
+
+    this.btnPdfQuickSummarize?.addEventListener('click', () => {
+      if (!this.currentAttachedPdf) return;
+      this.chatInput.value = `Provide a comprehensive, high-yield summary of this document (${this.currentAttachedPdf.title}), organized by key concepts, formulas/definitions, and main exam takeaways.`;
+      this.handleSend();
+    });
+
+    this.btnPdfQuickFlashcards?.addEventListener('click', () => {
+      this.openFlashcardModal();
+    });
+
+    this.btnPdfQuickQuiz?.addEventListener('click', () => {
+      this.openQuizStudio();
+    });
+
+    // Paste Image or PDF from Clipboard
     window.addEventListener('paste', (e) => {
       const files = e.clipboardData?.files;
       if (files && files.length > 0) {
         for (const file of files) {
-          if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|ico)$/i.test(file.name)) {
+          if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+            e.preventDefault();
+            this.handlePdfSelected(file);
+            return;
+          } else if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|ico)$/i.test(file.name)) {
             e.preventDefault();
             this.handleFileSelected(file);
             return;
@@ -223,7 +340,14 @@ class GrauqueApp {
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of items) {
-        if (item.type.startsWith('image/')) {
+        if (item.type === 'application/pdf') {
+          const file = item.getAsFile();
+          if (file) {
+            e.preventDefault();
+            this.handlePdfSelected(file);
+            break;
+          }
+        } else if (item.type.startsWith('image/')) {
           const file = item.getAsFile();
           if (file) {
             e.preventDefault();
@@ -234,7 +358,7 @@ class GrauqueApp {
       }
     });
 
-    // Drag and drop image
+    // Drag and drop image or PDF
     this.inputBoxCard?.addEventListener('dragover', (e) => {
       e.preventDefault();
       this.inputBoxCard.style.borderColor = 'var(--accent)';
@@ -250,7 +374,10 @@ class GrauqueApp {
       const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
         for (const file of files) {
-          if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|ico)$/i.test(file.name)) {
+          if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) {
+            this.handlePdfSelected(file);
+            break;
+          } else if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|ico)$/i.test(file.name)) {
             this.handleFileSelected(file);
             break;
           }
@@ -269,10 +396,35 @@ class GrauqueApp {
       });
     });
 
-    // Quick Quiz button in input toolbar
-    this.btnQuickQuiz?.addEventListener('click', () => {
-      this.openQuizStudio();
-    });
+    // Voice Dictation (Groq Whisper Large v3)
+    this.btnMicPrompt?.addEventListener('click', () => this.toggleVoiceRecording());
+    this.btnStopVoice?.addEventListener('click', () => this.stopVoiceRecording());
+
+    // Quick Action toolbar buttons
+    this.btnQuickQuiz?.addEventListener('click', () => this.openQuizStudio());
+    this.btnQuickFlashcards?.addEventListener('click', () => this.openFlashcardModal());
+    this.btnQuickStudyGuide?.addEventListener('click', () => this.openStudyGuideModal());
+
+    // Flashcard Studio Modal
+    this.btnOpenFlashcards?.addEventListener('click', () => this.openFlashcardModal());
+    this.btnCloseFlashcards?.addEventListener('click', () => this.closeFlashcardModal());
+    this.btnCancelFlashcards?.addEventListener('click', () => this.closeFlashcardModal());
+    this.btnGenerateFlashcards?.addEventListener('click', () => this.handleGenerateFlashcards());
+
+    // Study Guide Modal
+    this.btnOpenStudyGuide?.addEventListener('click', () => this.openStudyGuideModal());
+    this.btnCloseStudyGuide?.addEventListener('click', () => this.closeStudyGuideModal());
+    this.btnCancelStudyGuide?.addEventListener('click', () => this.closeStudyGuideModal());
+    this.btnGenerateStudyGuide?.addEventListener('click', () => this.handleGenerateStudyGuide());
+
+    // Socratic Tutor Modal
+    this.btnOpenTutor?.addEventListener('click', () => this.openTutorModal());
+    this.btnCloseTutor?.addEventListener('click', () => this.closeTutorModal());
+    this.btnCancelTutor?.addEventListener('click', () => this.closeTutorModal());
+    this.btnGenerateTutor?.addEventListener('click', () => this.handleGenerateTutor());
+
+    // Pomodoro Focus Timer
+    this.studentStudio.initTimerUI();
 
     // Quiz Studio Modal
     this.btnOpenQuizStudio?.addEventListener('click', () => this.openQuizStudio());
@@ -316,6 +468,30 @@ class GrauqueApp {
 
     // Export Chat
     this.btnExportChat?.addEventListener('click', () => this.exportCurrentChat());
+
+    // Memory Modal Events
+    this.btnOpenMemory?.addEventListener('click', () => this.openMemoryModal());
+    this.btnCloseMemory?.addEventListener('click', () => this.closeMemoryModal());
+    this.btnDoneMemory?.addEventListener('click', () => this.closeMemoryModal());
+
+    this.btnAddMemory?.addEventListener('click', () => this.handleAddManualMemory());
+    this.inputNewMemory?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.handleAddManualMemory();
+      }
+    });
+
+    this.settingEnableMemory?.addEventListener('change', (e) => {
+      this.memoryManager.setMemoryEnabled(e.target.checked);
+    });
+
+    this.btnClearMemories?.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to clear all remembered facts?')) {
+        await this.memoryManager.clearAllMemories();
+        this.memoryManager.renderMemoryList(this.memoryItemsContainer);
+      }
+    });
 
     // Global Key shortcuts
     window.addEventListener('keydown', (e) => {
@@ -447,6 +623,96 @@ class GrauqueApp {
     }
   }
 
+  // Handle PDF Attachment and Extraction
+  async handlePdfSelected(file) {
+    if (!file) return;
+
+    const fileName = file.name || 'Document.pdf';
+    if (this.pdfPreviewStrip) {
+      this.pdfPreviewStrip.style.display = 'flex';
+      if (this.pdfFileName) this.pdfFileName.textContent = fileName;
+      if (this.pdfMetaBadge) this.pdfMetaBadge.textContent = 'Extracting document text...';
+    }
+    if (this.btnAttachPdf) {
+      this.btnAttachPdf.classList.add('has-file');
+    }
+
+    try {
+      let filePath = file.path;
+      let fileData = null;
+
+      // Fallback if path is empty (e.g. web drag & drop)
+      if (!filePath) {
+        const arrayBuf = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuf);
+        let binary = '';
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        fileData = btoa(binary);
+      }
+
+      if (window.grauqueApi && window.grauqueApi.parsePdf) {
+        const result = await window.grauqueApi.parsePdf({ filePath, fileData });
+        if (result && result.success && result.text) {
+          result.title = result.title || fileName;
+          this.handleParsedPdfResult(result);
+        } else {
+          throw new Error(result?.error || 'No readable text content found in PDF.');
+        }
+      } else {
+        throw new Error('PDF extraction service is unavailable.');
+      }
+    } catch (err) {
+      console.error('PDF parsing error:', err);
+      if (this.pdfMetaBadge) {
+        this.pdfMetaBadge.textContent = `Error: ${err.message || 'Could not parse PDF'}`;
+      }
+    }
+  }
+
+  handleParsedPdfResult(result) {
+    if (!result || !result.success) return;
+
+    this.currentAttachedPdf = {
+      title: result.title || 'Document.pdf',
+      totalPages: result.totalPages || 1,
+      wordCount: result.wordCount || 0,
+      characterCount: result.characterCount || (result.text ? result.text.length : 0),
+      text: result.text || '',
+      isTruncated: Boolean(result.isTruncated)
+    };
+
+    if (this.pdfPreviewStrip) {
+      this.pdfPreviewStrip.style.display = 'flex';
+    }
+    if (this.pdfFileName) {
+      this.pdfFileName.textContent = this.currentAttachedPdf.title;
+    }
+    if (this.pdfMetaBadge) {
+      const wordStr = this.currentAttachedPdf.wordCount ? ` • ${this.currentAttachedPdf.wordCount.toLocaleString()} words` : '';
+      const truncStr = this.currentAttachedPdf.isTruncated ? ' (truncated for fast inference)' : '';
+      this.pdfMetaBadge.textContent = `✓ Ready • ${this.currentAttachedPdf.totalPages} page${this.currentAttachedPdf.totalPages === 1 ? '' : 's'}${wordStr}${truncStr}`;
+    }
+    if (this.btnAttachPdf) {
+      this.btnAttachPdf.classList.add('has-file');
+    }
+  }
+
+  clearAttachedPdf() {
+    this.currentAttachedPdf = null;
+    if (this.pdfPreviewStrip) {
+      this.pdfPreviewStrip.style.display = 'none';
+    }
+    if (this.pdfFileInput) {
+      this.pdfFileInput.value = '';
+    }
+    if (this.btnAttachPdf) {
+      this.btnAttachPdf.classList.remove('has-file');
+    }
+  }
+
   async refreshAccessibilityStatus() {
     if (window.grauqueApi && window.grauqueApi.checkAccessibility) {
       const trusted = await window.grauqueApi.checkAccessibility(false);
@@ -517,6 +783,7 @@ class GrauqueApp {
     this.setActiveConversation(newChat.id);
     this.renderHistoryList();
     this.clearAttachedImage();
+    this.clearAttachedPdf();
     this.chatInput?.focus();
   }
 
@@ -525,6 +792,7 @@ class GrauqueApp {
     const chat = this.conversations.find(c => c.id === id);
     if (!chat) return;
 
+    this.clearAttachedPdf();
     this.chatTitleDisplay.textContent = chat.title || 'New Conversation';
     this.renderMessages(chat.messages);
     this.renderHistoryList();
@@ -602,8 +870,24 @@ class GrauqueApp {
       if (msg.imageUrl) {
         imageHtml = `<img src="${msg.imageUrl}" class="msg-attached-image" alt="Attached image" />`;
       }
+      let pdfHtml = '';
+      if (msg.pdf) {
+        pdfHtml = `
+          <div class="msg-attached-pdf">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span class="msg-pdf-name">${this.escapeHtml(msg.pdf.title || 'Document.pdf')}</span>
+            <span class="msg-pdf-pages">(${msg.pdf.totalPages || 1} pg${msg.pdf.totalPages === 1 ? '' : 's'})</span>
+          </div>
+        `;
+      }
       row.innerHTML = `<div class="user-bubble">
         ${imageHtml}
+        ${pdfHtml}
         <div>${this.escapeHtml(msg.content)}</div>
       </div>`;
     } else {
@@ -651,6 +935,14 @@ class GrauqueApp {
         const interactiveQuiz = this.quizManager.renderInteractiveQuiz(quizData, `quiz-widget-${idx}`);
         bodyEl.appendChild(interactiveQuiz);
       }
+
+      // Check for structured flashcard deck
+      const flashcardData = this.studentStudio.extractFlashcardData(msg.content);
+      if (flashcardData) {
+        const bodyEl = row.querySelector(`#body-${idx}`);
+        const flashcardWidget = this.studentStudio.createFlashcardWidget(flashcardData, `flashcard-widget-${idx}`);
+        if (flashcardWidget) bodyEl.appendChild(flashcardWidget);
+      }
     }
 
     this.messagesContainer.appendChild(row);
@@ -670,8 +962,9 @@ class GrauqueApp {
   async handleSend() {
     const text = this.chatInput.value.trim();
     const attachedImage = this.currentAttachedImage;
+    const attachedPdf = this.currentAttachedPdf;
 
-    if ((!text && !attachedImage) || this.isGenerating) return;
+    if ((!text && !attachedImage && !attachedPdf) || this.isGenerating) return;
 
     const apiKey = (this.settings.apiKey || '').trim();
     if (!apiKey) {
@@ -683,6 +976,7 @@ class GrauqueApp {
     this.chatInput.value = '';
     this.chatInput.style.height = 'auto';
     this.clearAttachedImage();
+    this.clearAttachedPdf();
 
     let chat = this.conversations.find(c => c.id === this.activeConversationId);
     if (!chat) {
@@ -691,7 +985,10 @@ class GrauqueApp {
     }
 
     if (chat.messages.length === 0) {
-      const titleSource = text || 'Image Analysis';
+      let titleSource = text;
+      if (!titleSource && attachedPdf) titleSource = attachedPdf.title;
+      if (!titleSource && attachedImage) titleSource = 'Image Analysis';
+      titleSource = titleSource || 'New Conversation';
       chat.title = titleSource.length > 36 ? titleSource.substring(0, 36) + '...' : titleSource;
       this.chatTitleDisplay.textContent = chat.title;
       this.renderHistoryList();
@@ -700,14 +997,20 @@ class GrauqueApp {
     // Add user message
     const userMsg = {
       role: 'user',
-      content: text,
+      content: text || (attachedPdf ? `Please analyze and summarize this attached document: ${attachedPdf.title}` : ''),
       imageUrl: attachedImage || null,
+      pdf: attachedPdf || null,
       timestamp: Date.now()
     };
     chat.messages.push(userMsg);
     this.welcomeScreen.style.display = 'none';
     this.appendMessageElement(userMsg, chat.messages.length - 1);
     this.scrollToBottom();
+
+    // Automatic Memory Detection: check if prompt expresses a personal fact or preference to remember
+    if (text) {
+      this.memoryManager?.detectAndSaveFromPrompt(text);
+    }
 
     // Determine model
     const hasImageInChat = Boolean(attachedImage || chat.messages.some(m => Boolean(m.imageUrl)));
@@ -829,6 +1132,12 @@ class GrauqueApp {
           bodyEl.appendChild(interactiveQuiz);
         }
 
+        const flashcardData = this.studentStudio.extractFlashcardData(fullText);
+        if (flashcardData) {
+          const flashcardWidget = this.studentStudio.createFlashcardWidget(flashcardData, `flashcard-widget-${assistantIndex}`);
+          if (flashcardWidget) bodyEl.appendChild(flashcardWidget);
+        }
+
         if (speedBadgeEl) {
           speedBadgeEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>${finalMetrics.tokensPerSec} t/s • ${finalMetrics.elapsedSec}s`;
         }
@@ -873,6 +1182,9 @@ class GrauqueApp {
   // Quiz Studio Modal Handlers
   openQuizStudio() {
     this.quizStudioModal.classList.add('open');
+    if (this.currentAttachedPdf && (!this.quizTopic.value || !this.quizTopic.value.trim())) {
+      this.quizTopic.value = this.currentAttachedPdf.title.replace(/\.pdf$/i, '');
+    }
     this.quizTopic.focus();
   }
 
@@ -895,6 +1207,231 @@ class GrauqueApp {
 
     this.chatInput.value = prompt;
     this.handleSend();
+  }
+
+  // Voice Dictation (Groq Whisper Large v3 Turbo)
+  async toggleVoiceRecording() {
+    if (this.isRecordingVoice) {
+      await this.stopVoiceRecording();
+    } else {
+      await this.startVoiceRecording();
+    }
+  }
+
+  async startVoiceRecording() {
+    const apiKey = (this.settings.apiKey || '').trim();
+    if (!apiKey) {
+      this.openSettings();
+      alert('Please enter your Groq API key in Settings to use Voice Dictation.');
+      return;
+    }
+
+    try {
+      if (window.grauqueApi && window.grauqueApi.requestMicPermission) {
+        await window.grauqueApi.requestMicPermission();
+      }
+
+      this.audioChunks = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.voiceStream = stream;
+
+      let mimeType = 'audio/webm';
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported) {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        }
+      }
+
+      this.mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+      this.mediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          this.audioChunks.push(e.data);
+        }
+      };
+
+      this.mediaRecorder.onstart = () => {
+        this.isRecordingVoice = true;
+        this.btnMicPrompt?.classList.add('recording');
+        if (this.micStatusLabel) this.micStatusLabel.textContent = 'Listening...';
+        if (this.voiceRecordingBanner) this.voiceRecordingBanner.style.display = 'flex';
+        if (this.voiceBannerText) this.voiceBannerText.textContent = 'Listening... Speak your prompt clearly';
+      };
+
+      this.mediaRecorder.start(250);
+    } catch (err) {
+      console.error('[Grauque] Microphone recording error:', err);
+      alert(`Could not start microphone recording: ${err.message || err}. Please ensure microphone permission is granted in macOS System Settings > Privacy & Security > Microphone.`);
+      this.resetVoiceUI();
+    }
+  }
+
+  async stopVoiceRecording() {
+    if (!this.mediaRecorder || !this.isRecordingVoice) return;
+
+    return new Promise((resolve) => {
+      this.mediaRecorder.onstop = async () => {
+        if (this.voiceStream) {
+          this.voiceStream.getTracks().forEach(t => t.stop());
+          this.voiceStream = null;
+        }
+
+        if (this.voiceBannerText) {
+          this.voiceBannerText.textContent = 'Transcribing with Groq Whisper Large v3 Turbo...';
+        }
+
+        const audioBlob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType || 'audio/webm' });
+        this.resetVoiceUI();
+
+        if (audioBlob.size < 1000) {
+          resolve();
+          return;
+        }
+
+        try {
+          const transcribedText = await this.groqClient.transcribeAudio(audioBlob);
+          if (transcribedText && transcribedText.trim()) {
+            const current = this.chatInput.value.trim();
+            this.chatInput.value = current ? `${current} ${transcribedText.trim()}` : transcribedText.trim();
+            this.chatInput.style.height = 'auto';
+            this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 180) + 'px';
+            this.chatInput.focus();
+          }
+        } catch (transcribeErr) {
+          console.error('[Grauque] Transcription error:', transcribeErr);
+          alert(`Voice transcription error: ${transcribeErr.message || transcribeErr}`);
+        }
+        resolve();
+      };
+
+      this.mediaRecorder.stop();
+    });
+  }
+
+  resetVoiceUI() {
+    this.isRecordingVoice = false;
+    this.btnMicPrompt?.classList.remove('recording');
+    if (this.micStatusLabel) this.micStatusLabel.textContent = 'Voice';
+    if (this.voiceRecordingBanner) this.voiceRecordingBanner.style.display = 'none';
+  }
+
+  // Flashcard Modal
+  openFlashcardModal() {
+    if (this.flashcardModal) this.flashcardModal.classList.add('open');
+    if (this.currentAttachedPdf && this.flashcardTopic && (!this.flashcardTopic.value || !this.flashcardTopic.value.trim())) {
+      this.flashcardTopic.value = this.currentAttachedPdf.title.replace(/\.pdf$/i, '');
+    }
+    setTimeout(() => this.flashcardTopic?.focus(), 50);
+  }
+
+  closeFlashcardModal() {
+    if (this.flashcardModal) this.flashcardModal.classList.remove('open');
+  }
+
+  handleGenerateFlashcards() {
+    const topic = this.flashcardTopic?.value.trim();
+    if (!topic) {
+      alert('Please enter a subject or topic for your flashcard deck.');
+      return;
+    }
+
+    const count = parseInt(this.flashcardCount?.value, 10) || 5;
+    const focus = this.flashcardFocus?.value || 'High-Yield Concepts';
+
+    let prompt = this.studentStudio.getFlashcardPrompt(topic, count, focus);
+    if (this.currentAttachedPdf && this.currentAttachedPdf.text) {
+      prompt += `\n\nGenerate cards specifically covering the key points from the attached PDF ("${this.currentAttachedPdf.title}").`;
+    }
+    this.closeFlashcardModal();
+
+    this.chatInput.value = prompt;
+    this.handleSend();
+  }
+
+  // Study Guide Modal
+  openStudyGuideModal() {
+    if (this.studyGuideModal) this.studyGuideModal.classList.add('open');
+    if (this.currentAttachedPdf) {
+      if (this.studyGuideTopic && (!this.studyGuideTopic.value || !this.studyGuideTopic.value.trim())) {
+        this.studyGuideTopic.value = this.currentAttachedPdf.title.replace(/\.pdf$/i, '');
+      }
+      if (this.studyGuideNotes && (!this.studyGuideNotes.value || !this.studyGuideNotes.value.trim())) {
+        this.studyGuideNotes.value = this.currentAttachedPdf.text ? this.currentAttachedPdf.text.slice(0, 10000) : '';
+      }
+    }
+    setTimeout(() => this.studyGuideTopic?.focus(), 50);
+  }
+
+  closeStudyGuideModal() {
+    if (this.studyGuideModal) this.studyGuideModal.classList.remove('open');
+  }
+
+  handleGenerateStudyGuide() {
+    const topic = this.studyGuideTopic?.value.trim();
+    if (!topic) {
+      alert('Please enter a course or topic for your study guide.');
+      return;
+    }
+    const notes = this.studyGuideNotes?.value.trim() || '';
+
+    const prompt = this.studentStudio.getStudyGuidePrompt(topic, notes);
+    this.closeStudyGuideModal();
+
+    this.chatInput.value = prompt;
+    this.handleSend();
+  }
+
+  // Socratic Tutor Modal
+  openTutorModal() {
+    if (this.tutorModal) this.tutorModal.classList.add('open');
+    setTimeout(() => this.tutorProblem?.focus(), 50);
+  }
+
+  closeTutorModal() {
+    if (this.tutorModal) this.tutorModal.classList.remove('open');
+  }
+
+  handleGenerateTutor() {
+    const problem = this.tutorProblem?.value.trim();
+    if (!problem) {
+      alert('Please enter your homework problem or conceptual question.');
+      return;
+    }
+    const style = this.tutorStyle?.value || 'step-by-step';
+
+    const prompt = this.studentStudio.getTutorPrompt(problem, style);
+    this.closeTutorModal();
+
+    this.chatInput.value = prompt;
+    this.handleSend();
+  }
+
+  // Memory Modal Handlers
+  openMemoryModal() {
+    if (this.settingEnableMemory) {
+      this.settingEnableMemory.checked = this.memoryManager.isMemoryEnabled();
+    }
+    if (this.memoryItemsContainer) {
+      this.memoryManager.renderMemoryList(this.memoryItemsContainer);
+    }
+    this.memoryModal?.classList.add('open');
+    setTimeout(() => this.inputNewMemory?.focus(), 50);
+  }
+
+  closeMemoryModal() {
+    this.memoryModal?.classList.remove('open');
+  }
+
+  async handleAddManualMemory() {
+    const text = this.inputNewMemory?.value.trim();
+    if (!text) return;
+    const added = await this.memoryManager.addMemory(text);
+    if (added) {
+      this.inputNewMemory.value = '';
+      this.memoryManager.renderMemoryList(this.memoryItemsContainer);
+    }
   }
 
   // Settings Modal Handlers

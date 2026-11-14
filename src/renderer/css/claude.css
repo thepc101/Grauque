@@ -114,14 +114,18 @@ body {
   margin-left: -270px;
 }
 
+/* Ensure macOS traffic lights (close, min, zoom) are completely unobstructed when sidebar is collapsed */
+.sidebar.collapsed ~ .main-content .top-bar {
+  padding-left: 92px;
+}
+
 .sidebar-header {
   height: 52px;
-  padding: 14px 16px;
+  padding: 0 16px 0 96px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   -webkit-app-region: drag;
-  padding-left: 78px;
 }
 
 .brand-title-row {
@@ -1089,6 +1093,131 @@ body {
   color: var(--text-muted);
 }
 
+/* PDF Preview Strip */
+.pdf-preview-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  background: var(--bg-hover, rgba(0,0,0,0.03));
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.pdf-badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .pdf-badge-icon {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+}
+
+.pdf-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-file-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pdf-meta-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.pdf-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pdf-action-pill {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pdf-action-pill:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.remove-pdf-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-hover, rgba(0,0,0,0.06));
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.remove-pdf-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* User Message PDF Attachment Pill */
+.msg-attached-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.msg-attached-pdf svg {
+  flex-shrink: 0;
+}
+
+.msg-pdf-name {
+  font-weight: 600;
+}
+
+.msg-pdf-pages {
+  opacity: 0.85;
+  font-size: 11.5px;
+}
+
 .main-textarea {
   width: 100%;
   border: none;
@@ -1234,7 +1363,8 @@ body {
   transition: opacity 0.2s ease;
 }
 
-.modal-overlay.open {
+.modal-overlay.open,
+.modal-overlay.active {
   opacity: 1;
   pointer-events: auto;
 }
@@ -1427,4 +1557,563 @@ input:checked + .toggle-slider {
 
 input:checked + .toggle-slider:before {
   transform: translateX(20px);
+}
+
+/* ==========================================================================
+   Voice Dictation & Microphone Toolbar
+   ========================================================================== */
+.mic-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mic-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.mic-btn.recording {
+  background: rgba(217, 75, 50, 0.12);
+  border-color: #d94b32;
+  color: #d94b32;
+  animation: pulseMic 1.2s infinite alternate ease-in-out;
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(217, 75, 50, 0.4); }
+  100% { transform: scale(1.02); box-shadow: 0 0 0 6px rgba(217, 75, 50, 0); }
+}
+
+.voice-recording-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: rgba(217, 75, 50, 0.08);
+  border: 1px solid rgba(217, 75, 50, 0.25);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: #d94b32;
+}
+
+.voice-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #d94b32;
+  border-radius: 50%;
+  margin-right: 8px;
+  display: inline-block;
+  animation: pulseDot 1s infinite alternate;
+}
+
+@keyframes pulseDot {
+  0% { opacity: 0.4; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+.voice-banner-stop-btn {
+  background: #d94b32;
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Pomodoro Focus Timer
+   ========================================================================== */
+.pomodoro-timer-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.pomodoro-timer-pill.timer-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(217, 107, 67, 0.08);
+}
+
+.pomodoro-time-text {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.timer-ctrl-icon-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+}
+
+.timer-ctrl-icon-btn:hover {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   3D Interactive Flashcard Studio
+   ========================================================================== */
+.flashcard-deck-widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 14px 0;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.deck-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.deck-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deck-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(217, 107, 67, 0.12);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.deck-title-text {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.deck-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.deck-counter {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.deck-tool-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.deck-tool-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.deck-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.deck-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.25s ease;
+}
+
+/* 3D Perspective Card Scene */
+.card-scene {
+  perspective: 1000px;
+  width: 100%;
+  min-height: 190px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.card-flipper {
+  width: 100%;
+  min-height: 190px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-flipper.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  min-height: 190px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: var(--radius-md);
+  padding: 22px 26px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--border-color);
+}
+
+.card-front {
+  background: var(--bg-app);
+}
+
+.card-back {
+  background: var(--bg-sidebar);
+  transform: rotateY(180deg);
+  border-color: rgba(217, 107, 67, 0.3);
+}
+
+.card-face-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-category-tag {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}
+
+.card-flip-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.card-body-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: auto 0;
+  font-family: var(--font-sans);
+}
+
+/* Deck Controls */
+.deck-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.deck-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deck-ctrl-btn {
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 7px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.deck-ctrl-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.deck-flip-trigger-btn {
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.deck-flip-trigger-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.deck-rating-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rate-btn {
+  border: 1px solid var(--border-color);
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rate-again { color: #d94b32; }
+.rate-again:hover { background: rgba(217, 75, 50, 0.12); border-color: #d94b32; }
+
+.rate-hard { color: #e67e22; }
+.rate-hard:hover { background: rgba(230, 126, 34, 0.12); border-color: #e67e22; }
+
+.rate-good { color: #2980b9; }
+.rate-good:hover { background: rgba(41, 128, 185, 0.12); border-color: #2980b9; }
+
+.rate-easy { color: #27ae60; }
+.rate-easy:hover { background: rgba(39, 174, 96, 0.12); border-color: #27ae60; }
+
+/* Deck Summary */
+.deck-summary-view {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.summary-icon {
+  margin-bottom: 12px;
+}
+
+.summary-heading {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.summary-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.summary-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 360px;
+  margin: 0 auto 24px;
+}
+
+.stat-box {
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-app);
+}
+
+.stat-number {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stat-mastered .stat-number { color: #27ae60; }
+.stat-review .stat-number { color: #e67e22; }
+.stat-total .stat-number { color: var(--accent); }
+
+.summary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ==========================================================================
+   LaTeX Math Styling (KaTeX)
+   ========================================================================== */
+.katex-display {
+  margin: 14px 0 !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 0;
+}
+
+.katex-display-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin: 12px 0;
+}
+
+.katex {
+  font-size: 1.08em;
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Memory & Profile Styling
+   ========================================================================== */
+.memory-list-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-hover, rgba(0,0,0,0.03));
+  border: 1px solid var(--border-color);
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.memory-item-row:hover {
+  border-color: var(--accent);
+}
+
+.memory-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.memory-item-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.memory-item-text {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.memory-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.memory-delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.memory-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 16px;
+}
+
+/* Toast Notification */
+.grauque-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.15));
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10000;
+  transform: translateY(30px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.grauque-toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
 }

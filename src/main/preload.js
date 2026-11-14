@@ -13,9 +13,14 @@ contextBridge.exposeInMainWorld('grauqueApi', {
   saveSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
   testGroqKey: (key) => ipcRenderer.invoke('groq:test-key', key),
 
-  // Accessibility IPC
+  // Permissions IPC
   checkAccessibility: (prompt) => ipcRenderer.invoke('system:check-accessibility', prompt),
   openAccessibilitySettings: () => ipcRenderer.invoke('system:open-accessibility-settings'),
+  requestMicPermission: () => ipcRenderer.invoke('system:request-mic-permission'),
+
+  // PDF Extraction IPC
+  parsePdf: (options) => ipcRenderer.invoke('pdf:parse', options),
+  pickPdfFile: () => ipcRenderer.invoke('pdf:pick-file'),
 
   // Window Controls
   minimizeWindow: () => ipcRenderer.send('window:minimize'),

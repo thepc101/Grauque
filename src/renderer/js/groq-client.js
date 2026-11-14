@@ -47,15 +47,23 @@ class GroqClient {
       maxTokens = Math.min(maxTokens, 1000); // concise answers for text models
     }
 
-    const systemPrompt = settings.systemPrompt || 
-      'You are Grauque, an exceptionally capable and efficient AI assistant. Be direct, concise, and focused. Avoid unnecessary filler, repetition, or overly verbose preamble. Provide thorough depth only when explicitly asked.';
+    let finalSystemPrompt = settings.systemPrompt || 
+      'You are Grauque, an exceptionally capable and efficient AI assistant. Be direct, concise, and focused. Avoid unnecessary filler, repetition, or overly verbose preamble. Provide thorough depth only when explicitly asked. For math and scientific equations, format using clean LaTeX ($ for inline, $$ for block formulas). Never output raw <br> tags.';
+
+    // Inject User Memories if enabled
+    const memories = Array.isArray(settings.memories) ? settings.memories.filter(m => m && m.text && m.enabled !== false) : [];
+    if (settings.enableMemory !== false && memories.length > 0) {
+      finalSystemPrompt += '\n\n[User Profile & Persistent Memory]\nGrauque remembers these facts and preferences about the user:\n' + 
+        memories.map(m => `- ${m.text}`).join('\n') + 
+        '\nNaturally adapt your answers, tone, and examples according to these remembered preferences.';
+    }
 
     // Keep the most recent 8 messages to minimize token usage and latency
     const recentMessages = messages.slice(-8);
 
     const payloadMessages = [];
-    if (systemPrompt) {
-      payloadMessages.push({ role: 'system', content: systemPrompt });
+    if (finalSystemPrompt) {
+      payloadMessages.push({ role: 'system', content: finalSystemPrompt });
     }
 
     for (let i = 0; i < recentMessages.length; i++) {
@@ -70,6 +78,24 @@ class GroqClient {
         const textContent = (msg.content && msg.content.trim()) ? msg.content.trim() : 'Describe and analyze this image in detail.';
         parts.push({ type: 'text', text: textContent });
         payloadMessages.push({ role: 'user', content: parts });
+      } else if (msg.role === 'user' && msg.pdf) {
+        const isLatestUserTurn = (i >= recentMessages.length - 2);
+        const userPrompt = (typeof msg.content === 'string' && msg.content.trim()) 
+          ? msg.content.trim() 
+          : 'Please analyze and summarize this attached document.';
+
+        if (isLatestUserTurn && msg.pdf.text) {
+          const docContext = `[Attached PDF Document: "${msg.pdf.title || 'Document.pdf'}" (${msg.pdf.totalPages || 1} pages)]\n\n--- DOCUMENT CONTENT ---\n${msg.pdf.text}\n--- END OF DOCUMENT ---\n\nUser Question/Instruction:\n${userPrompt}`;
+          payloadMessages.push({
+            role: 'user',
+            content: docContext
+          });
+        } else {
+          payloadMessages.push({
+            role: 'user',
+            content: `[Referenced Document: "${msg.pdf.title || 'Document.pdf'}"]\n${userPrompt}`
+          });
+        }
       } else {
         const textContent = (typeof msg.content === 'string') ? msg.content : (msg.content?.[0]?.text || '');
         payloadMessages.push({
@@ -213,6 +239,45 @@ class GroqClient {
     } finally {
       this.activeController = null;
     }
+  }
+
+  async transcribeAudio(audioBlob) {
+    const settings = this.getSettings();
+    const apiKey = (settings.apiKey || '').trim();
+
+    if (!apiKey) {
+      throw new Error('Groq API Key is not set. Please click Settings to configure your key.');
+    }
+
+    const formData = new FormData();
+    const fileName = audioBlob.type.includes('mp4') ? 'recording.mp4' : 'recording.webm';
+    formData.append('file', audioBlob, fileName);
+    formData.append('model', 'whisper-large-v3-turbo');
+    formData.append('response_format', 'json');
+    formData.append('temperature', '0');
+
+    const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      let msg = `Transcription failed (${response.status})`;
+      try {
+        const parsed = JSON.parse(errText);
+        if (parsed.error && parsed.error.message) msg = parsed.error.message;
+      } catch (e) {
+        if (errText) msg += `: ${errText}`;
+      }
+      throw new Error(msg);
+    }
+
+    const data = await response.json();
+    return data.text || '';
   }
 }
 

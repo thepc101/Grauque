@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, screen, shell, net } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, screen, shell, net, session, systemPreferences, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const pdfParser = require('./pdf-parser');
 const {
   startDoubleOptionListener,
   stopDoubleOptionListener,
@@ -18,9 +19,11 @@ const defaultSettings = {
   model: 'openai/gpt-oss-120b',
   temperature: 0.7,
   maxTokens: 800,
-  systemPrompt: 'You are Grauque, an exceptionally capable and efficient AI assistant powered by Groq. Be direct, concise, and focused. Avoid unnecessary filler or overly verbose preamble. Provide thorough depth only when explicitly requested.',
+  systemPrompt: 'You are Grauque, an exceptionally capable and efficient AI assistant powered by Groq. Be direct, concise, and focused. Avoid unnecessary filler or overly verbose preamble. Provide thorough depth only when explicitly requested. For mathematical or scientific formulas, format using standard LaTeX math ($ for inline, $$ for block formulas). Never output raw <br> tags.',
   enableDoubleOption: true,
   enableOptionSpace: true,
+  enableMemory: true,
+  memories: [],
   theme: 'system'
 };
 
@@ -167,6 +170,17 @@ function registerShortcuts() {
 }
 
 app.whenReady().then(() => {
+  // Allow microphone access for voice transcription
+  if (session && session.defaultSession) {
+    session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+      if (permission === 'media') {
+        callback(true);
+        return;
+      }
+      callback(true);
+    });
+  }
+
   createMainWindow();
   createQuickPromptWindow();
   registerShortcuts();
@@ -279,6 +293,50 @@ ipcMain.handle('system:open-accessibility-settings', () => {
     exec('open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"');
   });
   return true;
+});
+
+ipcMain.handle('system:request-mic-permission', async () => {
+  if (process.platform === 'darwin' && systemPreferences && systemPreferences.askForMediaAccess) {
+    try {
+      const status = systemPreferences.getMediaAccessStatus('microphone');
+      if (status === 'not-determined') {
+        const granted = await systemPreferences.askForMediaAccess('microphone');
+        return { status: granted ? 'granted' : 'denied' };
+      }
+      return { status };
+    } catch (e) {
+      return { status: 'granted' };
+    }
+  }
+  return { status: 'granted' };
+});
+
+// PDF Extraction Handlers
+ipcMain.handle('pdf:parse', async (_event, options) => {
+  try {
+    return await pdfParser.extractText(options || {});
+  } catch (err) {
+    console.error('[Grauque] PDF extraction error:', err);
+    return { success: false, error: err.message, text: '' };
+  }
+});
+
+ipcMain.handle('pdf:pick-file', async () => {
+  if (!mainWindow) return null;
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select PDF Document',
+    filters: [{ name: 'PDF Documents', extensions: ['pdf'] }],
+    properties: ['openFile']
+  });
+  if (result.canceled || !result.filePaths || result.filePaths.length === 0) {
+    return null;
+  }
+  const filePath = result.filePaths[0];
+  const extracted = await pdfParser.extractText({ filePath });
+  return {
+    filePath,
+    ...extracted
+  };
 });
 
 ipcMain.on('window:minimize', () => {

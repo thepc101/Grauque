@@ -5,6 +5,7 @@
   <title>Grauque</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="vendor/prism-tomorrow.css">
+  <link rel="stylesheet" href="vendor/katex/katex.min.css">
   <link rel="stylesheet" href="css/claude.css">
 </head>
 <body>
@@ -36,12 +37,38 @@
           <span class="shortcut-badge">⌘K</span>
         </button>
 
+        <button class="quiz-studio-btn" id="btn-open-flashcards">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+          <span>Flashcard Deck</span>
+        </button>
+
+        <button class="quiz-studio-btn" id="btn-open-study-guide">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>Study Guide</span>
+        </button>
+
         <button class="quiz-studio-btn" id="btn-open-quiz-studio">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
             <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
           </svg>
           <span>Quiz Studio</span>
+        </button>
+
+        <button class="quiz-studio-btn" id="btn-open-tutor">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+          <span>Socratic Tutor</span>
         </button>
       </div>
 
@@ -77,12 +104,38 @@
         </div>
 
         <div class="top-bar-right">
+          <!-- Pomodoro Study Focus Timer -->
+          <div class="pomodoro-timer-pill" id="pomodoro-timer-pill" title="Pomodoro Focus Timer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span class="pomodoro-time-text" id="pomodoro-time-text">25:00</span>
+            <button class="timer-ctrl-icon-btn" id="btn-timer-toggle" title="Start / Pause Timer">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </button>
+            <button class="timer-ctrl-icon-btn" id="btn-timer-reset" title="Reset Timer">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+            </button>
+          </div>
+
           <select class="model-selector-dropdown" id="top-model-select">
             <option value="openai/gpt-oss-120b" selected>GPT-OSS 120B (Reasoning • Default)</option>
             <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Vision & Images)</option>
             <option value="openai/gpt-oss-20b">GPT-OSS 20B (Fast)</option>
             <option value="allam-2-7b">Allam 2 7B</option>
           </select>
+          <button class="top-action-btn" id="btn-open-memory" title="Grauque Memory & Profile (What AI remembers about you)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"></path>
+              <line x1="9" y1="21" x2="15" y2="21"></line>
+            </svg>
+            <span id="memory-badge-count">Memory</span>
+          </button>
           <button class="top-action-btn" id="btn-export-chat" title="Export conversation to Markdown">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -114,47 +167,47 @@
           <p class="welcome-subtitle">Powered by Groq's high-speed inference engine. Ask questions, analyze images, build interactive quizzes, or write code.</p>
           
           <div class="welcome-suggestions">
-            <div class="suggestion-card" data-prompt="Create an interactive 5-question quiz on World History with multiple-choice questions and explanations.">
+            <div class="suggestion-card" data-prompt="Create a 5-card flashcard deck on Cell Biology & Mitosis with high-yield concepts and definitions.">
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+              </span>
+              <span class="card-title">Flashcard Deck</span>
+              <span class="card-desc">Interactive 3D flip cards & Anki export</span>
+            </div>
+            <div class="suggestion-card" data-prompt="Create an Exam Cram Sheet and Study Guide for Microeconomics: Supply, Demand, Elasticity, and Market Structures.">
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+              </span>
+              <span class="card-title">Exam Study Guide</span>
+              <span class="card-desc">Core theory, formulas, and common traps</span>
+            </div>
+            <div class="suggestion-card" data-prompt="Walk me through solving this step-by-step as a Socratic tutor: Find the derivative of f(x) = (3x^2 - 5) / (2x + 1) using the quotient rule.">
+              <span class="card-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+              </span>
+              <span class="card-title">Socratic Tutor</span>
+              <span class="card-desc">Step-by-step problem solver with reasoning</span>
+            </div>
+            <div class="suggestion-card" data-prompt="Create an interactive 5-question multiple choice quiz on World History with detailed explanations.">
               <span class="card-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                 </svg>
               </span>
-              <span class="card-title">Interactive History Quiz</span>
-              <span class="card-desc">Test your knowledge with self-grading questions</span>
-            </div>
-            <div class="suggestion-card" data-prompt="Explain how neural networks learn via backpropagation and gradient descent in simple terms with an intuitive analogy.">
-              <span class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="9" y1="18" x2="15" y2="18"></line>
-                  <line x1="10" y1="22" x2="14" y2="22"></line>
-                  <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path>
-                </svg>
-              </span>
-              <span class="card-title">Explain AI Concepts</span>
-              <span class="card-desc">Deep reasoning via GPT-OSS 120B</span>
-            </div>
-            <div class="suggestion-card" data-prompt="Attach an image and ask Qwen 3.8 Vision to extract text, analyze diagrams, or describe what is happening.">
-              <span class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
-              </span>
-              <span class="card-title">Qwen 3.8 Vision</span>
-              <span class="card-desc">Upload images for instant visual reasoning</span>
-            </div>
-            <div class="suggestion-card" data-prompt="Write a production-ready LRU Cache implementation in Python with clean type hints, unit tests, and asymptotic complexity analysis.">
-              <span class="card-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="16 18 22 12 16 6"></polyline>
-                  <polyline points="8 6 2 12 8 18"></polyline>
-                </svg>
-              </span>
-              <span class="card-title">Python Architecture</span>
-              <span class="card-desc">Clean implementation with tests and complexity</span>
+              <span class="card-title">Quiz Studio</span>
+              <span class="card-desc">Self-grading interactive assessment</span>
             </div>
           </div>
         </div>
@@ -172,7 +225,37 @@
             <span class="preview-tag">Attached for Qwen 3.8 Vision</span>
           </div>
 
-          <textarea class="main-textarea" id="chat-input" placeholder="Ask Grauque anything... (Shift+Enter for newline, Enter to send)" rows="1"></textarea>
+          <!-- PDF attachment preview strip -->
+          <div class="pdf-preview-strip" id="pdf-preview-strip" style="display:none;">
+            <div class="pdf-badge-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <div class="pdf-preview-info">
+              <div class="pdf-file-name" id="pdf-file-name">document.pdf</div>
+              <div class="pdf-meta-badge" id="pdf-meta-badge">Ready • 1 page</div>
+            </div>
+            <div class="pdf-preview-actions">
+              <button class="pdf-action-pill" id="btn-pdf-quick-summarize" title="Quickly summarize this PDF">Summarize</button>
+              <button class="pdf-action-pill" id="btn-pdf-quick-flashcards" title="Make flashcard deck from this PDF">Flashcards</button>
+              <button class="pdf-action-pill" id="btn-pdf-quick-quiz" title="Make quiz from this PDF">Quiz</button>
+              <button class="remove-pdf-btn" id="btn-remove-pdf" title="Remove PDF">&times;</button>
+            </div>
+          </div>
+
+          <!-- Voice recording live banner -->
+          <div class="voice-recording-banner" id="voice-recording-banner" style="display:none;">
+            <span class="voice-pulse-dot"></span>
+            <span class="voice-banner-text" id="voice-banner-text">Listening... Speak now</span>
+            <button class="voice-banner-stop-btn" id="btn-stop-voice">Done (Stop & Transcribe)</button>
+          </div>
+
+          <textarea class="main-textarea" id="chat-input" placeholder="Ask Grauque anything, attach a PDF/Image, or dictate via microphone... (Shift+Enter for newline, Enter to send)" rows="1"></textarea>
           
           <div class="input-toolbar">
             <div class="toolbar-left">
@@ -186,12 +269,51 @@
               </button>
               <input type="file" id="image-file-input" accept="image/*" style="display:none;" />
 
-              <button class="quiz-quick-pill" id="btn-quick-quiz">
+              <button class="attach-btn" id="btn-attach-pdf" title="Attach PDF Document (Notes, textbook, paper, syllabus)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <path d="M10 12h4"></path>
+                  <path d="M10 16h4"></path>
+                </svg>
+                <span>PDF</span>
+              </button>
+              <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" style="display:none;" />
+
+              <button class="mic-btn" id="btn-mic-prompt" title="Voice to text (Dictate with Groq Whisper)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <span id="mic-status-label">Voice</span>
+              </button>
+
+              <button class="quiz-quick-pill" id="btn-quick-flashcards" title="Generate Flashcard Deck">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                </svg>
+                <span>Flashcards</span>
+              </button>
+
+              <button class="quiz-quick-pill" id="btn-quick-study-guide" title="Generate Exam Study Guide">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                </svg>
+                <span>Study Guide</span>
+              </button>
+
+              <button class="quiz-quick-pill" id="btn-quick-quiz" title="Generate Interactive Quiz">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                   <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                 </svg>
-                <span>Generate Quiz</span>
+                <span>Quiz</span>
               </button>
             </div>
             <div class="toolbar-right">
@@ -377,11 +499,190 @@
     </div>
   </div>
 
+  <!-- Flashcard Studio Modal -->
+  <div class="modal-overlay" id="flashcard-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+          <h3 class="modal-title">Flashcard Deck Studio</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-flashcards">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="flashcard-topic">Deck Subject, Chapter, or Topic</label>
+          <input type="text" class="form-input" id="flashcard-topic" placeholder="e.g. Organic Chemistry Functional Groups, AP US History 1920s..." />
+          <div class="form-hint">Enter your exam topic or lecture chapter to generate a high-yield study deck with Anki export.</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label class="form-label" for="flashcard-count">Deck Size</label>
+            <select class="form-input" id="flashcard-count">
+              <option value="5" selected>5 Cards (Quick review)</option>
+              <option value="8">8 Cards (Standard set)</option>
+              <option value="12">12 Cards (Comprehensive)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="flashcard-focus">Focus Style</label>
+            <select class="form-input" id="flashcard-focus">
+              <option value="High-Yield Concepts" selected>High-Yield Concepts</option>
+              <option value="Definitions & Terms">Definitions & Terms</option>
+              <option value="Formulas & Application">Formulas & Application</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-cancel-flashcards">Cancel</button>
+        <button class="btn-primary" id="btn-generate-flashcards">Generate Flashcard Deck</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Exam Study Guide Modal -->
+  <div class="modal-overlay" id="study-guide-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <h3 class="modal-title">Exam Study Guide & Cram Sheet</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-study-guide">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="study-guide-topic">Course, Topic, or Exam Material</label>
+          <input type="text" class="form-input" id="study-guide-topic" placeholder="e.g. Microeconomics Finals, Photosynthesis & Cellular Respiration..." />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="study-guide-notes">Optional: Paste Lecture Notes or Syllabus Snippet</label>
+          <textarea class="form-input" id="study-guide-notes" rows="3" placeholder="Paste rough notes, slides, or chapter summary to distill into an exam cheat sheet..."></textarea>
+          <div class="form-hint">Grauque will distill key formulas, definitions, and common test pitfalls.</div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-cancel-study-guide">Cancel</button>
+        <button class="btn-primary" id="btn-generate-study-guide">Generate Study Guide</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socratic Tutor Modal -->
+  <div class="modal-overlay" id="tutor-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+          <h3 class="modal-title">Socratic Step-by-Step Problem Solver</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-tutor">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="tutor-problem">Homework Problem or Conceptual Question</label>
+          <textarea class="form-input" id="tutor-problem" rows="4" placeholder="e.g. A 2kg block slides down a 30° incline with coefficient of friction μ=0.15. Find its acceleration..."></textarea>
+          <div class="form-hint">Tip: You can also attach an image of the problem or diagram from the main prompt box!</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="tutor-style">Tutoring Approach</label>
+          <select class="form-input" id="tutor-style">
+            <option value="step-by-step" selected>Step-by-Step Solution Walkthrough with Reasoning</option>
+            <option value="socratic-hint">Socratic Hints Only (Guide me without spoiling the answer)</option>
+            <option value="conceptual-analogy">Intuitive Real-World Analogy & Concept Explanation</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-cancel-tutor">Cancel</button>
+        <button class="btn-primary" id="btn-generate-tutor">Solve with Tutor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory & Personalization Modal -->
+  <div class="modal-overlay" id="memory-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
+            <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"></path>
+            <line x1="9" y1="21" x2="15" y2="21"></line>
+          </svg>
+          <h3 class="modal-title">Grauque AI Memory</h3>
+        </div>
+        <button class="modal-close-btn" id="btn-close-memory">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="toggle-row" style="margin-bottom:14px; padding:10px 14px; background:var(--bg-sidebar); border-radius:var(--radius-sm);">
+          <div>
+            <div style="font-weight:600; font-size:13.5px;">Enable Persistent Memory</div>
+            <div class="form-hint">Grauque remembers your background, courses, and preferences across all conversations.</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="setting-enable-memory" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="input-new-memory">Add a New Memory</label>
+          <div class="input-with-action">
+            <input type="text" class="form-input" id="input-new-memory" placeholder="e.g. Studying for MCAT, prefers concise bullet points, Mac user..." />
+            <button class="btn-primary" id="btn-add-memory" style="white-space:nowrap;">+ Remember</button>
+          </div>
+          <div class="form-hint">Tip: You can also just tell Grauque in chat (e.g. "Remember that my name is Pranav").</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label class="form-label" style="margin-bottom:0;">Stored Memories</label>
+            <button class="btn-secondary" id="btn-clear-memories" style="font-size:11px; padding:2px 8px; color:#ef4444;">Clear All</button>
+          </div>
+          <div class="memory-list-scroll" id="memory-items-container">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-primary" id="btn-done-memory">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
+  <script src="vendor/katex/katex.min.js"></script>
+  <script src="vendor/katex/mhchem.min.js"></script>
   <script src="vendor/markdown-it.min.js"></script>
   <script src="vendor/prism.js"></script>
   <script src="js/markdown-renderer.js"></script>
   <script src="js/quiz-manager.js"></script>
+  <script src="js/student-studio.js"></script>
+  <script src="js/memory-manager.js"></script>
   <script src="js/groq-client.js"></script>
   <script src="js/app.js"></script>
 </body>
