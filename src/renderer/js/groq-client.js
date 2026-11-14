@@ -17,7 +17,7 @@ class GroqClient {
     return lower.includes('qwen') || lower.includes('vision');
   }
 
-  async streamChat({ messages, onChunk, onMetrics, onDone, onError }) {
+  async streamChat({ messages, model: modelOverride, onChunk, onMetrics, onDone, onError }) {
     this.cancelActiveRequest();
 
     const settings = this.getSettings();
@@ -30,7 +30,12 @@ class GroqClient {
       return;
     }
 
-    const model = settings.model || 'openai/gpt-oss-120b';
+    // Auto-detect if conversation contains images and ensure vision model is used
+    const hasAnyImage = messages.some(m => Boolean(m.imageUrl));
+    let model = modelOverride || settings.model || 'openai/gpt-oss-120b';
+    if (hasAnyImage && !this.isVisionModel(model)) {
+      model = 'qwen/qwen3.8-27b';
+    }
     const temperature = parseFloat(settings.temperature) ?? 0.7;
     const isVision = this.isVisionModel(model);
 
@@ -45,28 +50,25 @@ class GroqClient {
     const systemPrompt = settings.systemPrompt || 
       'You are Grauque, an exceptionally capable and efficient AI assistant. Be direct, concise, and focused. Avoid unnecessary filler, repetition, or overly verbose preamble. Provide thorough depth only when explicitly asked.';
 
-    // Keep only the most recent 6 messages to minimize token usage and latency
-    const recentMessages = messages.slice(-6);
+    // Keep the most recent 8 messages to minimize token usage and latency
+    const recentMessages = messages.slice(-8);
 
     const payloadMessages = [];
     if (systemPrompt) {
       payloadMessages.push({ role: 'system', content: systemPrompt });
     }
 
-    const lastMsgIndex = recentMessages.length - 1;
-
     for (let i = 0; i < recentMessages.length; i++) {
       const msg = recentMessages[i];
-      const isCurrentTurn = (i === lastMsgIndex);
 
-      if (msg.role === 'user' && msg.imageUrl && isCurrentTurn && isVision) {
+      if (msg.role === 'user' && msg.imageUrl && isVision) {
         const parts = [];
-        const textContent = (msg.content && msg.content.trim()) ? msg.content.trim() : 'Describe and analyze this image concisely.';
-        parts.push({ type: 'text', text: textContent });
         parts.push({
           type: 'image_url',
           image_url: { url: msg.imageUrl }
         });
+        const textContent = (msg.content && msg.content.trim()) ? msg.content.trim() : 'Describe and analyze this image in detail.';
+        parts.push({ type: 'text', text: textContent });
         payloadMessages.push({ role: 'user', content: parts });
       } else {
         const textContent = (typeof msg.content === 'string') ? msg.content : (msg.content?.[0]?.text || '');

@@ -210,6 +210,16 @@ class GrauqueApp {
 
     // Paste Image from Clipboard
     window.addEventListener('paste', (e) => {
+      const files = e.clipboardData?.files;
+      if (files && files.length > 0) {
+        for (const file of files) {
+          if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|ico)$/i.test(file.name)) {
+            e.preventDefault();
+            this.handleFileSelected(file);
+            return;
+          }
+        }
+      }
       const items = e.clipboardData?.items;
       if (!items) return;
       for (const item of items) {
@@ -237,9 +247,14 @@ class GrauqueApp {
     this.inputBoxCard?.addEventListener('drop', (e) => {
       e.preventDefault();
       this.inputBoxCard.style.borderColor = '';
-      const file = e.dataTransfer?.files?.[0];
-      if (file && file.type.startsWith('image/')) {
-        this.handleFileSelected(file);
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        for (const file of files) {
+          if (file.type.startsWith('image/') || /\.(jpe?g|png|gif|webp|bmp|ico)$/i.test(file.name)) {
+            this.handleFileSelected(file);
+            break;
+          }
+        }
       }
     });
 
@@ -351,6 +366,10 @@ class GrauqueApp {
           }
         }
 
+        // Groq requires at least 32 pixels in each dimension
+        width = Math.max(32, width || 64);
+        height = Math.max(32, height || 64);
+
         const canvas = document.createElement('canvas');
         canvas.width = width;
         canvas.height = height;
@@ -367,8 +386,8 @@ class GrauqueApp {
         // Secondary pass if still over 150KB
         if (result.length > 200000) {
           const passCanvas = document.createElement('canvas');
-          passCanvas.width = Math.round(width * 0.7);
-          passCanvas.height = Math.round(height * 0.7);
+          passCanvas.width = Math.max(32, Math.round(width * 0.7));
+          passCanvas.height = Math.max(32, Math.round(height * 0.7));
           const passCtx = passCanvas.getContext('2d');
           passCtx.fillStyle = '#FFFFFF';
           passCtx.fillRect(0, 0, passCanvas.width, passCanvas.height);
@@ -691,9 +710,18 @@ class GrauqueApp {
     this.scrollToBottom();
 
     // Determine model
+    const hasImageInChat = Boolean(attachedImage || chat.messages.some(m => Boolean(m.imageUrl)));
     let modelToUse = this.settings.model || 'openai/gpt-oss-120b';
-    if (attachedImage) {
+    if (hasImageInChat) {
       modelToUse = 'qwen/qwen3.8-27b';
+      if (this.topModelSelect && this.topModelSelect.value !== 'qwen/qwen3.8-27b') {
+        this.ensureModelInDropdown(this.topModelSelect, 'qwen/qwen3.8-27b');
+        this.topModelSelect.value = 'qwen/qwen3.8-27b';
+        this.settings.model = 'qwen/qwen3.8-27b';
+        if (window.grauqueApi) {
+          window.grauqueApi.saveSettings(this.settings);
+        }
+      }
     }
 
     const assistantIndex = chat.messages.length;
@@ -736,6 +764,7 @@ class GrauqueApp {
 
     await this.groqClient.streamChat({
       messages: chat.messages.slice(0, -1),
+      model: modelToUse,
       onChunk: (chunkContent, fullText, chunkReasoning, fullReasoning) => {
         assistantMsg.content = fullText;
         assistantMsg.reasoning = fullReasoning;
