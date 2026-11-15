@@ -34,11 +34,10 @@ function loadSettings() {
       const parsed = JSON.parse(data);
       // Migrate deprecated models automatically if present
       if (parsed.model && (
-        parsed.model.includes('llama-3.3-70b') ||
-        parsed.model.includes('llama-3.1-8b') ||
-        parsed.model.includes('gemma2') ||
-        parsed.model.includes('mixtral') ||
-        parsed.model.includes('deepseek-r1')
+        parsed.model.includes('llama') ||
+        parsed.model.includes('deepseek') ||
+        parsed.model.includes('gemma') ||
+        parsed.model.includes('mixtral')
       )) {
         parsed.model = 'openai/gpt-oss-120b';
       }
@@ -280,10 +279,10 @@ ipcMain.handle('groq:test-key', async (_event, apiKey) => {
     const data = await response.json();
     const rawModels = data.data || [];
     
-    // Filter to active chat & vision models (exclude audio/whisper/guard)
+    // Filter to active chat & vision models (exclude audio/whisper/guard/decommissioned)
     const validChatModels = rawModels
       .map(m => m.id)
-      .filter(id => !id.includes('whisper') && !id.includes('guard'));
+      .filter(id => !id.includes('whisper') && !id.includes('guard') && !id.includes('llama') && !id.includes('deepseek'));
 
     return {
       success: true,

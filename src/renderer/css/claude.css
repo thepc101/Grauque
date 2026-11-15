@@ -2802,9 +2802,12 @@ input:checked + .toggle-slider:before {
 }
 
 /* Conversation Pinning & Renaming */
-.history-item.pinned .history-title::before {
-  content: '📌 ';
-  font-size: 11px;
+.history-item.pinned {
+  border-left: 2px solid var(--accent);
+}
+
+.history-item.pinned .pin-btn {
+  color: var(--accent);
 }
 
 .history-rename-input {

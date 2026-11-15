@@ -49,7 +49,7 @@ class MemoryManager {
     }
 
     this.updateMemoryBadge();
-    this.showToast(`🧠 Saved to memory: "${cleanText}"`);
+    this.showToast(`Saved to memory: "${cleanText}"`);
     return newMem;
   }
 
@@ -163,7 +163,12 @@ class MemoryManager {
       item.className = 'memory-item-row';
       item.innerHTML = `
         <div class="memory-item-content">
-          <span class="memory-item-icon">🧠</span>
+          <span class="memory-item-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"></path>
+              <line x1="9" y1="21" x2="15" y2="21"></line>
+            </svg>
+          </span>
           <span class="memory-item-text">${this.escapeHtml(mem.text)}</span>
         </div>
         <button class="memory-delete-btn" data-id="${mem.id}" title="Forget this memory">&times;</button>

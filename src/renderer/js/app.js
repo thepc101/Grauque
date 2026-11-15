@@ -253,6 +253,22 @@ class GrauqueApp {
     }
   }
 
+  getModelDisplayName(modelId, isSettings = false) {
+    if (modelId === 'openai/gpt-oss-120b') {
+      return isSettings ? 'Grauque Max (Reasoning • Default)' : 'Grauque Max';
+    }
+    if (modelId === 'qwen/qwen3.8-27b') {
+      return isSettings ? 'Grauque Image (Vision Support)' : 'Grauque Image';
+    }
+    if (modelId === 'openai/gpt-oss-20b') {
+      return isSettings ? 'Grauque Medium (Fast)' : 'Grauque Medium';
+    }
+    if (modelId === 'allam-2-7b') {
+      return 'Grauque Low';
+    }
+    return modelId;
+  }
+
   ensureModelInDropdown(selectEl, modelId) {
     if (!selectEl) return;
     let exists = false;
@@ -265,7 +281,8 @@ class GrauqueApp {
     if (!exists) {
       const opt = document.createElement('option');
       opt.value = modelId;
-      opt.textContent = modelId;
+      const isSettings = selectEl.id === 'setting-default-model';
+      opt.textContent = this.getModelDisplayName(modelId, isSettings);
       selectEl.appendChild(opt);
     }
   }
@@ -935,7 +952,7 @@ class GrauqueApp {
     if (this.pdfMetaBadge) {
       const wordStr = this.currentAttachedPdf.wordCount ? ` • ${this.currentAttachedPdf.wordCount.toLocaleString()} words` : '';
       const truncStr = this.currentAttachedPdf.isTruncated ? ' (truncated for fast inference)' : '';
-      this.pdfMetaBadge.textContent = `✓ Ready • ${this.currentAttachedPdf.totalPages} page${this.currentAttachedPdf.totalPages === 1 ? '' : 's'}${wordStr}${truncStr}`;
+      this.pdfMetaBadge.textContent = `Ready • ${this.currentAttachedPdf.totalPages} page${this.currentAttachedPdf.totalPages === 1 ? '' : 's'}${wordStr}${truncStr}`;
     }
     if (this.btnAttachPdf) {
       this.btnAttachPdf.classList.add('has-file');
@@ -963,7 +980,7 @@ class GrauqueApp {
       const trusted = await window.grauqueApi.checkAccessibility(false);
       if (this.axStatusDesc) {
         if (trusted) {
-          this.axStatusDesc.innerHTML = '<span style="color:#10b981; font-weight:600;">✓ Granted</span> — Double-tap Option is active everywhere.';
+          this.axStatusDesc.innerHTML = '<span style="color:#10b981; font-weight:600;">Granted</span> — Double-tap Option is active everywhere.';
         } else {
           this.axStatusDesc.innerHTML = '<span style="color:#f59e0b; font-weight:600;">Not enabled</span> — Grant access in Privacy Settings for global double Option.';
         }
@@ -2153,16 +2170,16 @@ class GrauqueApp {
       if (window.grauqueApi) {
         const result = await window.grauqueApi.testGroqKey(key);
         if (result.success) {
-          this.apiTestBadge.innerHTML = `<span style="color:#10b981; font-weight:600;">✓ Connected (${result.modelCount} models verified)</span>`;
+          this.apiTestBadge.innerHTML = `<span style="color:#10b981; font-weight:600;">Connected (${result.modelCount} models verified)</span>`;
           if (Array.isArray(result.models) && result.models.length > 0) {
             this.updateModelDropdowns(result.models);
           }
         } else {
-          this.apiTestBadge.innerHTML = `<span style="color:#ef4444;">✗ Failed: ${this.escapeHtml(result.error)}</span>`;
+          this.apiTestBadge.innerHTML = `<span style="color:#ef4444;">Failed: ${this.escapeHtml(result.error)}</span>`;
         }
       }
     } catch (e) {
-      this.apiTestBadge.innerHTML = `<span style="color:#ef4444;">✗ Error: ${this.escapeHtml(e.message)}</span>`;
+      this.apiTestBadge.innerHTML = `<span style="color:#ef4444;">Error: ${this.escapeHtml(e.message)}</span>`;
     } finally {
       this.btnTestGroqKey.textContent = 'Test Key';
       this.btnTestGroqKey.disabled = false;
@@ -2197,28 +2214,23 @@ class GrauqueApp {
   }
 
   updateModelDropdowns(modelsList) {
-    const dropdowns = [this.topModelSelect, this.settingDefaultModel];
+    const dropdowns = [this.bottomModelSelect, this.topModelSelect, this.settingDefaultModel];
+    // Filter out decommissioned models
+    const filteredModels = modelsList.filter(m => !m.includes('llama') && !m.includes('deepseek'));
     dropdowns.forEach(selectEl => {
       if (!selectEl) return;
       const currentVal = selectEl.value;
       selectEl.innerHTML = '';
+      const isSettings = selectEl.id === 'setting-default-model';
 
-      modelsList.forEach(modelId => {
+      filteredModels.forEach(modelId => {
         const opt = document.createElement('option');
         opt.value = modelId;
-        if (modelId === 'openai/gpt-oss-120b') {
-          opt.textContent = 'OpenAI GPT-OSS 120B (Reasoning • Default)';
-        } else if (modelId === 'qwen/qwen3.8-27b') {
-          opt.textContent = 'Qwen 3.8 27B (Vision & Image Support)';
-        } else if (modelId === 'openai/gpt-oss-20b') {
-          opt.textContent = 'OpenAI GPT-OSS 20B (Fast)';
-        } else {
-          opt.textContent = modelId;
-        }
+        opt.textContent = this.getModelDisplayName(modelId, isSettings);
         selectEl.appendChild(opt);
       });
 
-      if (modelsList.includes(currentVal)) {
+      if (filteredModels.includes(currentVal)) {
         selectEl.value = currentVal;
       } else {
         selectEl.value = 'openai/gpt-oss-120b';

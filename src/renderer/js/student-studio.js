@@ -44,11 +44,11 @@ Please format the response in two parts:
       p += `\nHere are my lecture notes and reference material to synthesize:\n"""\n${notes.trim()}\n"""\n`;
     }
     p += `\nPlease structure the guide with:
-1. 📌 Core Definitions & Fundamental Concepts
-2. ⚡ High-Yield Exam Topics (Frequently tested concepts)
-3. 📐 Essential Formulas, Rules & Principles Table
-4. ⚠️ Common Exam Traps & Tricky Distinctions to Avoid
-5. 🎯 3 Rapid-Fire Concept Check Questions`;
+1. Core Definitions & Fundamental Concepts
+2. High-Yield Exam Topics (Frequently tested concepts)
+3. Essential Formulas, Rules & Principles Table
+4. Common Exam Traps & Tricky Distinctions to Avoid
+5. 3 Rapid-Fire Concept Check Questions`;
     return p;
   }
 
@@ -211,21 +211,21 @@ Please include:
   getStudyGuideSystemPrompt() {
     return `You are Grauque Study Guide Studio, an expert academic tutor. Create a comprehensive, beautifully structured Exam Study Guide and High-Yield Cram Sheet.
 Use crisp GitHub-flavored Markdown formatted with:
-# 📚 [Subject / Topic Title] — Exam Master Guide
+# [Subject / Topic Title] — Exam Master Guide
 
-## 📌 1. High-Yield Summary & Core Theory
+## 1. High-Yield Summary & Core Theory
 A concise conceptual breakdown of the fundamental principles.
 
-## ⚡ 2. Essential Vocabulary & Definitions
+## 2. Essential Vocabulary & Definitions
 A table or bullet list of bulletproof definitions and distinctions.
 
-## 📐 3. Key Formulas, Laws, & Theorems
+## 3. Key Formulas, Laws, & Theorems
 Step-by-step formulas with variable definitions and units.
 
-## ⚠️ 4. Common Exam Traps & Tricky Distinctions
+## 4. Common Exam Traps & Tricky Distinctions
 Pitfalls professors love to test and how to avoid getting tripped up.
 
-## 🎯 5. Quick Check Self-Test
+## 5. Quick Check Self-Test
 3 rapid-fire concept questions to test active recall.
 
 Be direct, insightful, and prioritize high-retention learning.`;
@@ -623,7 +623,7 @@ Format with clean KaTeX-ready math and bold step markers.`;
       const nextMode = (this.sessionsCompleted % 4 === 0) ? 'longBreak' : 'shortBreak';
       const breakMins = nextMode === 'longBreak' ? 15 : 5;
       
-      const proceed = confirm(`🎉 Focus session completed!\nGreat job staying in the zone! Time for a ${breakMins}-minute break. Switch to break timer?`);
+      const proceed = confirm(`Focus session completed!\nGreat job staying in the zone. Time for a ${breakMins}-minute break. Switch to break timer?`);
       if (proceed) {
         this.resetTimer(nextMode);
         this.startTimer();
@@ -631,7 +631,7 @@ Format with clean KaTeX-ready math and bold step markers.`;
         this.resetTimer('focus');
       }
     } else {
-      alert(`⏰ Break is over! Ready to jump back into studying?`);
+      alert(`Break is over. Ready to return to studying?`);
       this.resetTimer('focus');
     }
   }

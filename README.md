@@ -25,71 +25,73 @@
 
 ---
 
-## 📖 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-  - [🎨 Antigravity Light Brand Aesthetic](#-antigravity-light-brand-aesthetic)
-  - [🧭 Clean, Uncrammed Workspace & Study Tools Popup](#-clean-uncrammed-workspace--study-tools-popup)
-  - [📄 Native Apple PDFKit Document Intelligence](#-native-apple-pdfkit-document-intelligence)
-  - [🧠 Persistent AI Memory](#-persistent-ai-memory)
-  - [🎓 Student Study Suite](#-student-study-suite)
-  - [🎙️ Groq Whisper Voice-to-Text](#-groq-whisper-voice-to-text)
-  - [📐 Mathematical LaTeX & Chemistry (KaTeX)](#-mathematical-latex--chemistry-katex)
-  - [⚡ Global Double-Tap Option (⌥⌥) Quick Prompt](#-global-double-tap-option--quick-prompt)
-  - [👁️ Multimodal Vision with Qwen 3.8](#-multimodal-vision-with-qwen-38)
-- [Supported Groq Models](#-supported-groq-models)
-- [Installation](#-installation)
-- [Keyboard Shortcuts](#-keyboard-shortcuts)
-- [Building from Source](#-building-from-source)
-- [Architecture & Tech Stack](#-architecture--tech-stack)
-- [License](#-license)
-
----
-
-## 🌟 Overview
-
-**Grauque** (pronounced */ɡʁok/*) is a native macOS desktop assistant built specifically for Intel Macs (`x86_64`) that connects directly to Groq's low-latency inference engine. Delivering responses at up to **250+ tokens per second**, Grauque features a brand identity inspired by Google DeepMind / Antigravity with a clean geometric levitation logo, electric azure & cyan palette, and high-productivity tools tailored for students, researchers, and developers.
+- [Overview](#overview)
+- [Key Features](#key-features)
+  - [Apple Dark Obsidian Brand Aesthetic](#apple-dark-obsidian-brand-aesthetic)
+  - [Clean, Uncrammed Workspace & Study Tools Menu](#clean-uncrammed-workspace--study-tools-menu)
+  - [Native Apple PDFKit Document Intelligence](#native-apple-pdfkit-document-intelligence)
+  - [Persistent AI Memory](#persistent-ai-memory)
+  - [Student Study Suite](#student-study-suite)
+  - [Groq Whisper Voice-to-Text](#groq-whisper-voice-to-text)
+  - [Mathematical LaTeX & Chemistry (KaTeX)](#mathematical-latex--chemistry-katex)
+  - [Global Double-Tap Option (⌥⌥) Quick Prompt](#global-double-tap-option--quick-prompt)
+  - [Multimodal Vision with Grauque Image](#multimodal-vision-with-grauque-image)
+  - [Real-Time Streaming & Productivity](#real-time-streaming--productivity)
+- [Supported Models](#supported-models)
+- [Installation](#installation)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
+- [Building from Source](#building-from-source)
+- [Architecture & Tech Stack](#architecture--tech-stack)
+- [License](#license)
 
 ---
 
-## 🚀 Key Features
+## Overview
 
-### 🎨 Antigravity Light Brand Aesthetic
-- **Minimalist Antigravity Logo**: A modern, geometric levitation glyph combining an upward quantum trajectory with an orbital loop, styled with electric cyan (`#38BDF8`), vibrant azure (`#0284C7`), and deep indigo (`#4F46E5`).
-- **Antigravity Crisp Slate Light**: Clean slate styling with subtle gradients, frosted glass cards, and crisp contrast.
-- **Original Grauque Editorial Themes**: Keep the classic warm ivory paper or dark obsidian look if you prefer.
-- **Seamless Theme Switcher**: Toggle dynamically in **Settings (`⌘,`)** under Appearance Theme.
+**Grauque** (pronounced */ɡʁok/*) is a native macOS desktop assistant built specifically for Intel Macs (`x86_64`) that connects directly to Groq's low-latency inference engine. Delivering responses at up to **250+ tokens per second**, Grauque features an Apple dark obsidian aesthetic with subtle gradient accents, typography powered by SF Pro, and high-productivity tools tailored for students, researchers, and developers.
 
 ---
 
-### 🧭 Clean, Uncrammed Workspace & Study Tools Popup
-- **3-Line Study Tools Menu (`☰`)**: All student learning features are neatly organized into a floating popup menu next to the input box—keeping your chat workspace clean, spacious, and distraction-free.
+## Key Features
+
+### Apple Dark Obsidian Brand Aesthetic
+- **Minimalist Vector Identity**: A modern, geometric levitation glyph combining an upward quantum trajectory with an orbital loop, styled with electric cyan, vibrant azure, and deep indigo.
+- **Refined Dark Surfaces**: Solid obsidian panels (`#14141A`), subtle 1px border framing, and a soft feathered bloom around the prompt area.
+- **San Francisco Typography**: Native Apple SF Pro typography with smooth antialiasing and proportional font metrics.
+
+---
+
+### Clean, Uncrammed Workspace & Study Tools Menu
+- **3-Line Study Tools Menu**: All student learning features are neatly organized into a floating popup menu next to the input box—keeping your chat workspace clean, spacious, and distraction-free.
 - **Under-Prompt Model Selector**: Switch AI models effortlessly right from the bottom bar directly underneath the prompt box.
-- **Unified Attachment Button (`📎`)**: A single intuitive attachment button that seamlessly accepts both images (diagrams, homework, photos) and PDF documents.
-- **Minimalist Voice Dictation Button (`🎙️`)**: A clean, circular microphone button right inside the prompt box with live audio-waveform pulsation.
+- **Unified Attachment Button**: A single intuitive attachment button that seamlessly accepts both images (diagrams, homework, photos) and PDF documents.
+- **Minimalist Voice Dictation Button**: A clean, circular microphone button right inside the prompt box with live audio-waveform pulsation.
 - **Unobstructed macOS Window Controls**: Traffic light buttons (close, minimize, fullscreen) are fully spaced and never collide with sidebar or header buttons.
 
-### 📄 Native Apple PDFKit Document Intelligence
+---
+
+### Native Apple PDFKit Document Intelligence
 - **Hardware-Accelerated Extraction**: Uses macOS's native `PDFKit.framework` compiled via Objective-C (`bin/pdf-extract`) to parse lecture slides, research papers, syllabi, and textbooks in milliseconds with 100% unicode and layout fidelity.
 - **Zero Cloud Leakage**: PDF extraction happens 100% locally on your Mac—no third-party cloud parsing services.
-- **Drag-and-Drop & Attach**: Click the **`[ 📄 PDF ]`** button, paste from your clipboard, or drag and drop any `.pdf` file directly onto the chat input.
+- **Drag-and-Drop & Attach**: Click the PDF attachment button, paste from your clipboard, or drag and drop any `.pdf` file directly onto the chat input.
 - **Interactive Action Pills**: Attached documents display page and word counts, with instant 1-click workflows:
-  - **`Summarize`**: Generates a high-yield executive summary highlighting core takeaways.
-  - **`Flashcards`**: Instantly creates a 3D study deck based on the PDF.
-  - **`Quiz`**: Builds a multiple-choice knowledge check from the document.
+  - **Summarize**: Generates a high-yield executive summary highlighting core takeaways.
+  - **Flashcards**: Instantly creates a 3D study deck based on the PDF.
+  - **Quiz**: Builds a multiple-choice knowledge check from the document.
 - **Smart Token Preservation**: Automatically caps historical turn context to prevent exceeding Groq output tokens per minute (OTPM) limits.
 
 ---
 
-### 🧠 Persistent AI Memory
-- **Conversational Memory Detection**: Simply chat naturally (e.g. *"Remember that my name is thepc101"*, *"Remember that I'm taking Organic Chemistry and prefer concise explanations"*, *"Note that I use Python and PyTorch"*). Grauque automatically detects the intent, updates your personal memory profile, and confirms with a toast alert.
+### Persistent AI Memory
+- **Conversational Memory Detection**: Simply chat naturally (e.g. *"Remember that my name is thepc101"*, *"Remember that I'm taking Organic Chemistry and prefer concise explanations"*, *"Note that I use Python and PyTorch"*). Grauque automatically detects the intent, updates your personal memory profile, and confirms with a toast notification.
 - **Permanent Context Injection**: Your saved background, courses, and preferences are automatically injected into the system prompt across all current and future chats.
-- **Dedicated Memory Modal**: Click the **`[ 🧠 Memory ]`** button in the top bar to inspect, manually add, delete, or clear memories at any time.
+- **Dedicated Memory Modal**: Click the Memory button in the top bar to inspect, manually add, delete, or clear memories at any time.
 
 ---
 
-### 🎓 Student Study Suite
+### Student Study Suite
 
 Built to optimize learning, active recall, and focus:
 
@@ -108,14 +110,14 @@ Built to optimize learning, active recall, and focus:
 
 ---
 
-### 🎙️ Groq Whisper Voice-to-Text
-- Click the **`[ 🎙️ Voice ]`** button in the toolbar to speak your prompts.
+### Groq Whisper Voice-to-Text
+- Click the microphone button in the prompt toolbar to speak your prompts.
 - Audio is transcribed directly through Groq's high-speed `whisper-large-v3-turbo` model with near-zero latency.
 - Visual live pulsing dot and transcription banner.
 
 ---
 
-### 📐 Mathematical LaTeX & Chemistry (KaTeX)
+### Mathematical LaTeX & Chemistry (KaTeX)
 - Full local rendering for inline math (`$...$`) and display equation blocks (`$$...$$`).
 - Chemistry equation support via `mhchem` (e.g. $\ce{6CO2 + 6H2O -> C6H12O6 + 6O2}$).
 - Cleans and formats all line breaks without raw `<br>` tags.
@@ -123,43 +125,46 @@ Built to optimize learning, active recall, and focus:
 
 ---
 
-### ⚡ Global Double-Tap Option (`⌥⌥`) Quick Prompt
+### Global Double-Tap Option (`⌥⌥`) Quick Prompt
 - Tap the `Option` (`⌥`) key twice from any application in macOS to summon a spotlight-style floating quick prompt.
 - Press `Enter` to automatically switch focus to Grauque and begin streaming the response immediately.
 - Includes global fallback shortcut (`⌥Space`) that works with or without macOS Accessibility permissions.
 
 ---
 
-### 👁️ Multimodal Vision with Qwen 3.8
+### Multimodal Vision with Grauque Image
 - Upload diagrams, handwritten homework, textbook figures, or UI mockups via file picker, paste, or drag-and-drop.
-- Automatically selects the vision model (`qwen/qwen3.8-27b`).
+- Automatically selects the vision model (`Grauque Image` / `qwen/qwen3.8-27b`).
 - Built-in dynamic image compressor downscales large images to keep you well under Groq OTPM caps.
 
 ---
 
-### ⚡ Real-Time Streaming & Productivity
+### Real-Time Streaming & Productivity
 - Real-time token streaming speed indicator (e.g. `240 tokens/s • 0.8s`).
 - Collapsible reasoning/thinking analysis accordion for models that emit chain-of-thought tokens.
-- 1-Click **Export to Markdown** for easy note saving.
-- Unobstructed macOS traffic light buttons: custom padding prevents window controls from overlapping sidebar buttons.
+- Message action bars: 1-click Copy, Read Aloud (TTS), Retry turn, and Export to Markdown.
+- User message editing with inline prompt modification and branching re-generation.
+- Slash command menu (`/quiz`, `/flashcards`, `/cram`, `/tutor`, `/code`, `/summarize`, `/explain`, `/math`).
+- Real-time conversation search and pin support.
+- Deep research mode toggle and AI persona switcher.
 
 ---
 
-## 🤖 Supported Groq Models
+## Supported Models
 
-| Model ID | Best For | Context |
-| :--- | :--- | :--- |
-| **`openai/gpt-oss-120b`** | **Default Reasoning Model**: Deep thinking, math, coding, study guides, and analysis | 131k |
-| **`qwen/qwen3.8-27b`** | **Multimodal Vision**: Image inspection, homework diagrams, visual charts | 131k |
-| **`openai/gpt-oss-20b`** | **Ultra-Fast Everyday**: Quick questions and rapid conversational assistance | 131k |
-| **`allam-2-7b`** | **Lightweight Inference**: Minimal latency for quick queries | 8k |
-| **`whisper-large-v3-turbo`**| **Voice Dictation**: Instant audio transcription | Audio |
+| Rebranded Name | Underlying Engine | Best For | Context |
+| :--- | :--- | :--- | :--- |
+| **Grauque Max** | `openai/gpt-oss-120b` | **Default Reasoning**: Deep thinking, math, coding, study guides, and complex analysis | 131k |
+| **Grauque Image** | `qwen/qwen3.8-27b` | **Multimodal Vision**: Image inspection, homework diagrams, visual charts, and diagrams | 131k |
+| **Grauque Medium** | `openai/gpt-oss-20b` | **Ultra-Fast Everyday**: Quick questions and rapid conversational assistance | 131k |
+| **Grauque Low** | `allam-2-7b` | **Lightweight Inference**: Minimal latency for straightforward queries | 8k |
+| **Whisper** | `whisper-large-v3-turbo` | **Voice Dictation**: Instant audio-to-text transcription | Audio |
 
 *You can also click **Fetch Latest Models** in Settings to dynamically discover newly released models on your Groq account.*
 
 ---
 
-## 📥 Installation
+## Installation
 
 1. Download the latest installer: **[Grauque-1.0.0-mac-x64.dmg](https://github.com/thepc101/grauque/releases/download/v1.0.0/Grauque-1.0.0.dmg)** (or grab the latest DMG from [Releases](https://github.com/thepc101/grauque/releases/latest)).
 2. Double-click the DMG to open the installer window.
@@ -171,7 +176,7 @@ Built to optimize learning, active recall, and focus:
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+## Keyboard Shortcuts
 
 | Shortcut | Action |
 | :--- | :--- |
@@ -185,7 +190,7 @@ Built to optimize learning, active recall, and focus:
 
 ---
 
-## 🛠️ Building from Source
+## Building from Source
 
 ### Prerequisites
 - macOS 10.15 Catalina or newer (Intel `x86_64`)
@@ -212,7 +217,7 @@ npm run dist
 
 ---
 
-## 🏛️ Architecture & Tech Stack
+## Architecture & Tech Stack
 
 ```
 Grauque/
@@ -241,6 +246,6 @@ Grauque/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
