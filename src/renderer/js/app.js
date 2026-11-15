@@ -188,39 +188,32 @@ class GrauqueApp {
         model: 'openai/gpt-oss-120b',
         temperature: 0.7,
         maxTokens: 4096,
-        theme: 'antigravity-light'
+        theme: 'dark'
       };
     }
+
+    this.settings.theme = 'dark';
 
     // Default to gpt-oss-120b if old deprecated model was saved
     if (!this.settings.model || this.settings.model.includes('llama') || this.settings.model.includes('gemma') || this.settings.model.includes('mixtral')) {
       this.settings.model = 'openai/gpt-oss-120b';
     }
 
+    // Listen for macOS system color scheme changes
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (this.settings && this.settings.theme === 'system') {
+          this.applySettingsToUI();
+        }
+      });
+    }
+
     this.applySettingsToUI();
   }
 
   applySettingsToUI() {
-    let theme = this.settings.theme || 'antigravity-light';
-
-    // Normalize legacy or cosmic dark
-    if (theme === 'antigravity-dark' || theme === 'dark' || theme === 'cosmic') {
-      theme = 'antigravity-light';
-      this.settings.theme = 'antigravity-light';
-      if (window.grauqueApi) {
-        window.grauqueApi.saveSettings(this.settings);
-      }
-    }
-    if (theme === 'light') theme = 'antigravity-light';
-
-    let effectiveTheme = theme;
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      effectiveTheme = prefersDark ? 'claude-dark' : 'antigravity-light';
-      document.documentElement.setAttribute('data-theme', effectiveTheme);
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
+    this.settings.theme = 'dark';
+    document.documentElement.setAttribute('data-theme', 'dark');
 
     // Update brand logos
     const sidebarLogo = document.getElementById('sidebar-logo-img');
@@ -1071,7 +1064,7 @@ class GrauqueApp {
 
       row.innerHTML = `
         <div class="assistant-container">
-          <div class="assistant-avatar">G</div>
+          <img src="assets/icon.png" class="assistant-avatar" width="28" height="28" alt="Grauque" />
           <div class="assistant-content-wrapper">
             <div class="assistant-meta">
               <span class="meta-brand">Grauque</span>
@@ -1203,7 +1196,7 @@ class GrauqueApp {
     row.id = `msg-${assistantIndex}`;
     row.innerHTML = `
       <div class="assistant-container">
-        <div class="assistant-avatar">G</div>
+        <img src="assets/icon.png" class="assistant-avatar" width="28" height="28" alt="Grauque" />
         <div class="assistant-content-wrapper">
           <div class="assistant-meta">
             <span class="meta-brand">Grauque</span>
@@ -1607,9 +1600,9 @@ class GrauqueApp {
     this.settingSystemPrompt.value = this.settings.systemPrompt || '';
     this.settingEnableDoubleOpt.checked = this.settings.enableDoubleOption !== false;
     this.settingEnableOptSpace.checked = this.settings.enableOptionSpace !== false;
-    let currentTheme = this.settings.theme || 'antigravity-light';
-    if (currentTheme === 'antigravity-dark' || currentTheme === 'dark' || currentTheme === 'cosmic') currentTheme = 'antigravity-light';
-    this.settingTheme.value = currentTheme;
+    if (this.settingTheme) {
+      this.settingTheme.value = 'dark';
+    }
 
     this.apiTestBadge.textContent = '';
     this.refreshAccessibilityStatus();
@@ -1715,7 +1708,7 @@ class GrauqueApp {
     this.settings.systemPrompt = this.settingSystemPrompt.value.trim();
     this.settings.enableDoubleOption = this.settingEnableDoubleOpt.checked;
     this.settings.enableOptionSpace = this.settingEnableOptSpace.checked;
-    this.settings.theme = this.settingTheme.value;
+    this.settings.theme = 'dark';
 
     if (window.grauqueApi) {
       await window.grauqueApi.saveSettings(this.settings);

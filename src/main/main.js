@@ -24,7 +24,7 @@ const defaultSettings = {
   enableOptionSpace: true,
   enableMemory: true,
   memories: [],
-  theme: 'system'
+  theme: 'dark'
 };
 
 function loadSettings() {
@@ -69,7 +69,9 @@ function createMainWindow() {
     title: 'Grauque',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 18, y: 18 },
-    backgroundColor: '#F8FAFC',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -178,6 +180,14 @@ function registerShortcuts() {
 }
 
 app.whenReady().then(() => {
+  // Set macOS Dock Icon dynamically
+  if (process.platform === 'darwin' && app.dock) {
+    const iconPath = path.join(__dirname, '../renderer/assets/icon.png');
+    if (fs.existsSync(iconPath)) {
+      app.dock.setIcon(iconPath);
+    }
+  }
+
   // Allow microphone access for voice transcription
   if (session && session.defaultSession) {
     session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {

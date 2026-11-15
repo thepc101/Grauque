@@ -82,7 +82,7 @@
 ---
 
 ### 🧠 Persistent AI Memory
-- **Conversational Memory Detection**: Simply chat naturally (e.g. *"Remember that my name is Pranav"*, *"Remember that I'm taking Organic Chemistry and prefer concise explanations"*, *"Note that I use Python and PyTorch"*). Grauque automatically detects the intent, updates your personal memory profile, and confirms with a toast alert.
+- **Conversational Memory Detection**: Simply chat naturally (e.g. *"Remember that my name is thepc101"*, *"Remember that I'm taking Organic Chemistry and prefer concise explanations"*, *"Note that I use Python and PyTorch"*). Grauque automatically detects the intent, updates your personal memory profile, and confirms with a toast alert.
 - **Permanent Context Injection**: Your saved background, courses, and preferences are automatically injected into the system prompt across all current and future chats.
 - **Dedicated Memory Modal**: Click the **`[ 🧠 Memory ]`** button in the top bar to inspect, manually add, delete, or clear memories at any time.
 

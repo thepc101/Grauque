@@ -1,9 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="antigravity-light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <title>Grauque</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="vendor/prism-tomorrow.css">
   <link rel="stylesheet" href="vendor/katex/katex.min.css">
   <link rel="stylesheet" href="css/claude.css">
@@ -14,7 +17,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="brand-title-row">
-          <img class="app-brand-logo logo-theme-adaptive" id="sidebar-logo-img" src="assets/icon.png" width="26" height="26" alt="Grauque" style="filter: drop-shadow(0 2px 6px rgba(0,0,0,0.25)); display: block;">
+          <img class="app-brand-logo" id="sidebar-logo-img" src="assets/icon.png" width="28" height="28" alt="Grauque" style="display: block;">
           <span class="brand-name">Grauque</span>
         </div>
         <button class="collapse-sidebar-btn" id="btn-collapse-sidebar" title="Collapse Sidebar (⌘B)">
@@ -28,47 +31,12 @@
       <div class="sidebar-actions">
         <button class="new-chat-btn" id="btn-new-chat">
           <div class="btn-left">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14"></path>
             </svg>
-            <span>New Chat</span>
+            <span>New Conversation</span>
           </div>
           <span class="shortcut-badge">⌘K</span>
-        </button>
-
-        <button class="quiz-studio-btn" id="btn-open-flashcards">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-          </svg>
-          <span>Flashcard Deck</span>
-        </button>
-
-        <button class="quiz-studio-btn" id="btn-open-study-guide">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-          </svg>
-          <span>Study Guide</span>
-        </button>
-
-        <button class="quiz-studio-btn" id="btn-open-quiz-studio">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
-          <span>Quiz Studio</span>
-        </button>
-
-        <button class="quiz-studio-btn" id="btn-open-tutor">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
-            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
-          </svg>
-          <span>Socratic Tutor</span>
         </button>
       </div>
 
@@ -146,7 +114,7 @@
         <!-- Empty State / Welcome -->
         <div class="welcome-screen" id="welcome-screen">
           <div class="welcome-logo-wrapper">
-            <img class="welcome-app-logo logo-theme-adaptive" id="welcome-logo-img" src="assets/icon.png" width="68" height="68" alt="Grauque Logo" />
+            <img class="welcome-app-logo" id="welcome-logo-img" src="assets/icon.png" width="72" height="72" alt="Grauque Logo" />
           </div>
           <h1 class="welcome-title">What would you like to explore today?</h1>
           <p class="welcome-subtitle">Powered by Groq's high-speed inference engine. Ask questions, analyze images, build interactive quizzes, or write code.</p>
@@ -501,12 +469,9 @@
         <div class="form-group">
           <label class="form-label" for="setting-theme">Appearance Theme</label>
           <select class="form-input" id="setting-theme">
-            <option value="antigravity-light">Antigravity Light (Modern Slate & Electric Blue)</option>
-            <option value="claude-dark" selected>Original Grauque Obsidian (Dark)</option>
-            <option value="claude-light">Original Grauque Paper (Warm Light)</option>
-            <option value="system">System (Automatic Follow OS)</option>
+            <option value="dark" selected>Apple Dark (Liquid Glass)</option>
           </select>
-          <div class="form-hint">Choose between Antigravity modern light and original Grauque themes.</div>
+          <div class="form-hint">Grauque is styled in native macOS Apple Dark Liquid Glass.</div>
         </div>
       </div>
 
@@ -721,7 +686,7 @@
             <input type="text" class="form-input" id="input-new-memory" placeholder="e.g. Studying for MCAT, prefers concise bullet points, Mac user..." />
             <button class="btn-primary" id="btn-add-memory" style="white-space:nowrap;">+ Remember</button>
           </div>
-          <div class="form-hint">Tip: You can also just tell Grauque in chat (e.g. "Remember that my name is Pranav").</div>
+          <div class="form-hint">Tip: You can also just tell Grauque in chat (e.g. "Remember that my name is thepc101").</div>
         </div>
 
         <div class="form-group" style="margin-bottom:0;">
@@ -751,6 +716,7 @@
   <script src="js/student-studio.js"></script>
   <script src="js/memory-manager.js"></script>
   <script src="js/groq-client.js"></script>
+  <script src="vendor/puppertino/js/liquid_glass.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -2,28 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Grauque — Meadow Footer</title>
+  <title>Grauque — Calm AI Bar for macOS</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --paper: #f1f1ee;
-      --ink: #0c0c0c;
-      --body: #6f6f6c;
-      --muted: #9c9c98;
-      --wordmark: #efefeb;
-      --mist: #e2e3f1; /* pale lavender the blue-hour meadow fades into */
-      --font: "Inter", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+      --paper: #09090c;
+      --ink: #f5f5f7;
+      --body: #a1a1a6;
+      --muted: #71717a;
+      --wordmark: rgba(255, 255, 255, 0.12);
+      --mist: #151322;
+      --accent: #0a84ff;
+      --accent-hover: #409cff;
+      --font-display: "DM Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+      --font-body: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     *, *::before, *::after { box-sizing: border-box; }
-    html { -webkit-text-size-adjust: 100%; }
+    html { -webkit-text-size-adjust: 100%; background: var(--paper); }
     body {
       margin: 0;
       background: var(--paper);
       color: var(--ink);
-      font-family: var(--font);
+      font-family: var(--font-body);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
@@ -31,13 +35,13 @@
     ul { margin: 0; padding: 0; list-style: none; }
 
     .footer {
-      --u: min(100vw / 1440, 100vh / 672);
-      --u: min(100vw / 1440, 100svh / 672);
+      --u: clamp(0.72px, min(100vw / 1440, 100vh / 720), 1.15px);
       position: relative;
-      height: 100vh;
-      height: 100svh;
+      min-height: 100vh;
+      min-height: 100svh;
       background: var(--paper);
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
       isolation: isolate;
     }
 
@@ -55,6 +59,7 @@
       object-fit: cover;
       object-position: 50% 100%;
       transform: translateY(9%);
+      opacity: 0.65;
     }
     .footer__stage::after {
       content: "";
@@ -63,9 +68,10 @@
       background: linear-gradient(
         to bottom,
         var(--paper) 0%,
-        rgb(241 241 238 / .96) 26%,
-        rgb(241 241 238 / .72) 44%,
-        rgb(241 241 238 / 0) 70%
+        rgba(9, 9, 12, 0.95) 28%,
+        rgba(9, 9, 12, 0.65) 52%,
+        rgba(9, 9, 12, 0.25) 80%,
+        transparent 100%
       );
       pointer-events: none;
     }
@@ -79,23 +85,24 @@
       z-index: 1;
       margin: 0;
       font-size: calc(390 * var(--u));
-      font-weight: 600;
+      font-family: var(--font-display);
+      font-weight: 700;
       line-height: .74;
-      letter-spacing: -0.045em;
+      letter-spacing: -0.05em;
       white-space: nowrap;
       pointer-events: none;
       user-select: none;
-      color: rgb(232 234 250 / .4);
+      color: rgba(255, 255, 255, 0.05);
       background: linear-gradient(
         to bottom,
-        rgb(255 255 255 / .78),
-        rgb(214 218 246 / .36) 48%,
-        rgb(255 255 255 / .62)
+        rgba(255, 255, 255, 0.35) 0%,
+        rgba(160, 175, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.04) 100%
       );
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 calc(-1 * var(--u)) 0 rgb(255 255 255 / .55)) drop-shadow(0 0 calc(18 * var(--u)) rgb(190 200 255 / .45));
+      filter: drop-shadow(0 0 calc(24 * var(--u)) rgba(10, 132, 255, 0.22));
     }
 
     /* 3. Fog Layer */
@@ -103,26 +110,26 @@
       position: absolute;
       inset: auto 0 0;
       z-index: 2;
-      height: 17%;
+      height: 22%;
       pointer-events: none;
       background: linear-gradient(
         to top,
-        var(--mist) 0%,
-        rgb(226 227 241 / .6) 30%,
-        rgb(226 227 241 / 0) 100%
+        var(--paper) 0%,
+        rgba(21, 19, 34, 0.7) 40%,
+        rgba(21, 19, 34, 0) 100%
       );
     }
 
-    /* 4. Content Grid */
+    /* 4. Content Grid (Brand + 2 Link Columns without menu) */
     .footer__content {
       position: relative;
       z-index: 3;
       display: grid;
-      grid-template-columns: calc(440 * var(--u)) calc(240 * var(--u)) calc(240 * var(--u)) 1fr;
+      grid-template-columns: calc(480 * var(--u)) calc(280 * var(--u)) 1fr;
       align-items: start;
       width: calc(1440 * var(--u));
       margin: 0 auto;
-      padding: calc(86 * var(--u)) calc(100 * var(--u)) 0 calc(160 * var(--u));
+      padding: calc(86 * var(--u)) calc(120 * var(--u)) calc(80 * var(--u)) calc(160 * var(--u));
     }
 
     /* Brand Block */
@@ -134,77 +141,82 @@
       display: inline-flex;
       align-items: center;
       gap: calc(10 * var(--u));
-      font-size: calc(17 * var(--u));
-      font-weight: 500;
-      letter-spacing: -0.02em;
+      font-size: calc(18 * var(--u));
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: -0.03em;
       color: var(--ink);
     }
     .brand__mark {
-      width: calc(30 * var(--u));
-      height: calc(30 * var(--u));
-      border-radius: calc(8 * var(--u));
+      width: calc(34 * var(--u));
+      height: calc(34 * var(--u));
+      border-radius: calc(9 * var(--u));
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      box-shadow: 0 calc(1 * var(--u)) calc(2 * var(--u)) rgb(0 0 0 / .25);
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      background: transparent;
       flex-shrink: 0;
-      background: linear-gradient(to bottom, #2b2b2b, #0a0a0a 55%);
-      position: relative;
     }
     .brand__mark img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
     }
 
     .brand__title {
       margin: calc(19 * var(--u)) 0 0;
-      font-size: calc(20 * var(--u));
-      font-weight: 600;
+      font-family: var(--font-display);
+      font-size: calc(22 * var(--u));
+      font-weight: 700;
       line-height: 1.2;
-      letter-spacing: -0.045em;
+      letter-spacing: -0.04em;
       color: var(--ink);
     }
     .brand__text {
-      max-width: calc(412 * var(--u));
+      max-width: calc(420 * var(--u));
       margin: calc(18 * var(--u)) 0 0;
       color: var(--body);
       font-size: calc(13.7 * var(--u));
-      line-height: 1.43;
-      letter-spacing: -0.012em;
+      line-height: 1.48;
+      letter-spacing: -0.01em;
     }
 
     .brand__cta {
       display: inline-flex;
       align-items: center;
-      gap: calc(6 * var(--u));
-      height: calc(32.5 * var(--u));
-      margin-top: calc(20 * var(--u));
-      padding: 0 calc(16 * var(--u)) 0 calc(15 * var(--u));
-      border-radius: calc(7 * var(--u));
-      background: #0c0c0c;
+      gap: calc(8 * var(--u));
+      height: calc(34 * var(--u));
+      margin-top: calc(22 * var(--u));
+      padding: 0 calc(18 * var(--u));
+      border-radius: calc(8 * var(--u));
+      background: var(--accent);
       color: #ffffff;
-      font-size: calc(11.8 * var(--u));
-      font-weight: 500;
+      font-family: var(--font-display);
+      font-size: calc(12.5 * var(--u));
+      font-weight: 600;
       letter-spacing: -0.01em;
       width: fit-content;
-      transition: background 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 4px 16px rgba(10, 132, 255, 0.4);
+      transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
     .brand__cta:hover {
-      background: #262626;
+      background: var(--accent-hover);
       transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(10, 132, 255, 0.55);
     }
     .brand__cta svg {
-      width: calc(13 * var(--u));
-      height: calc(13 * var(--u));
-      margin-top: calc(-1.5 * var(--u));
+      width: calc(14 * var(--u));
+      height: calc(14 * var(--u));
+      margin-top: calc(-1 * var(--u));
       flex-shrink: 0;
     }
 
     .brand__copy {
-      margin: calc(23 * var(--u)) 0 0;
+      margin: calc(24 * var(--u)) 0 0;
       color: var(--muted);
       font-size: calc(12.2 * var(--u));
       letter-spacing: 0.01em;
@@ -212,9 +224,9 @@
     .brand__by {
       display: flex;
       align-items: center;
-      gap: calc(5 * var(--u));
-      margin: calc(21 * var(--u)) 0 0;
-      font-size: calc(11.8 * var(--u));
+      gap: calc(6 * var(--u));
+      margin: calc(18 * var(--u)) 0 0;
+      font-size: calc(12 * var(--u));
       font-weight: 500;
       letter-spacing: -0.01em;
       color: var(--ink);
@@ -226,23 +238,26 @@
       display: inline-flex;
       align-items: center;
       gap: calc(6 * var(--u));
-      margin-left: calc(5 * var(--u));
-      font-weight: 500;
+      margin-left: calc(4 * var(--u));
+      font-weight: 600;
+      color: var(--ink);
     }
     .brand__avatar {
       width: calc(23 * var(--u));
       height: calc(23 * var(--u));
       border-radius: 50%;
-      background: #e3e3e0;
+      background: rgba(255, 255, 255, 0.1);
       overflow: hidden;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.15);
     }
-    .brand__avatar svg {
+    .brand__avatar img {
       width: 100%;
       height: 100%;
+      object-fit: cover;
       display: block;
     }
 
@@ -250,18 +265,20 @@
       display: flex;
       flex-wrap: wrap;
       gap: calc(8 * var(--u));
-      margin-top: calc(16 * var(--u));
+      margin-top: calc(18 * var(--u));
     }
     .chip {
       display: inline-flex;
       align-items: center;
       gap: calc(6 * var(--u));
-      height: calc(25 * var(--u));
-      padding: 0 calc(10 * var(--u));
-      border: 1px solid rgb(12 12 12 / .12);
+      height: calc(26 * var(--u));
+      padding: 0 calc(11 * var(--u));
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 999px;
-      background: rgb(255 255 255 / .55);
-      font-size: calc(10.8 * var(--u));
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      font-size: calc(11 * var(--u));
       font-weight: 500;
       letter-spacing: -0.01em;
       white-space: nowrap;
@@ -281,8 +298,8 @@
       width: calc(6 * var(--u));
       height: calc(6 * var(--u));
       border-radius: 50%;
-      background: #2fb36a;
-      box-shadow: 0 0 0 calc(2.5 * var(--u)) rgb(47 179 106 / .18);
+      background: #30d158;
+      box-shadow: 0 0 0 calc(2.5 * var(--u)) rgba(48, 209, 88, 0.25);
       flex-shrink: 0;
     }
 
@@ -292,10 +309,11 @@
       flex-direction: column;
     }
     .col__title {
+      font-family: var(--font-display);
       font-size: calc(16 * var(--u));
-      font-weight: 600;
+      font-weight: 700;
       line-height: 1;
-      letter-spacing: -0.045em;
+      letter-spacing: -0.03em;
       margin: 0;
       color: var(--ink);
     }
@@ -305,36 +323,29 @@
       margin-top: calc(24 * var(--u));
       font-size: calc(13.7 * var(--u));
       line-height: 1.24;
-      letter-spacing: 0.022em;
-      color: #161616;
-    }
-    .col--menu .col__list {
-      gap: calc(15 * var(--u));
-      margin-top: calc(21 * var(--u));
-      font-weight: 500;
-      letter-spacing: -0.025em;
-      color: var(--ink);
+      letter-spacing: -0.01em;
+      color: var(--body);
     }
     .col__list a {
-      transition: opacity 0.2s ease;
+      transition: color 0.2s ease, opacity 0.2s ease;
     }
     .col__list a:hover {
-      opacity: 0.55;
+      color: var(--accent);
+      opacity: 1;
     }
 
     /* 7. Tablet (768–1023px) */
     @media (min-width: 768px) and (max-width: 1023px) {
       .footer {
-        --u: min(100vw / 1040, 100vh / 672);
-        --u: min(100vw / 1040, 100svh / 672);
+        --u: clamp(0.72px, min(100vw / 1040, 100vh / 672), 1.1px);
       }
       .footer__content {
-        grid-template-columns: calc(400 * var(--u)) calc(190 * var(--u)) calc(210 * var(--u)) 1fr;
+        grid-template-columns: calc(440 * var(--u)) calc(260 * var(--u)) 1fr;
         width: calc(1040 * var(--u));
-        padding: calc(64 * var(--u)) calc(40 * var(--u)) 0;
+        padding: calc(64 * var(--u)) calc(40 * var(--u)) calc(60 * var(--u));
       }
       .brand__text {
-        max-width: calc(350 * var(--u));
+        max-width: calc(360 * var(--u));
       }
       .footer__wordmark {
         font-size: calc(286 * var(--u));
@@ -356,19 +367,19 @@
         background: linear-gradient(
           to bottom,
           var(--paper) 0%,
-          rgb(241 241 238 / .95) 50%,
-          rgb(241 241 238 / .8) 68%,
-          rgb(241 241 238 / 0) 90%
+          rgba(9, 9, 12, 0.95) 50%,
+          rgba(9, 9, 12, 0.8) 68%,
+          transparent 90%
         );
       }
       .footer__content {
         display: grid;
-        grid-template-columns: auto auto auto;
+        grid-template-columns: 1fr 1fr;
         justify-content: space-between;
-        column-gap: 12px;
+        column-gap: 20px;
         row-gap: 36px;
         width: 100%;
-        padding: 40px 20px 0;
+        padding: 40px 20px 60px;
         margin-bottom: max(34vw, 150px);
       }
       .brand {
@@ -402,8 +413,7 @@
       .col__title {
         font-size: 15px;
       }
-      .col__list,
-      .col--menu .col__list {
+      .col__list {
         gap: 14px;
         margin-top: 20px;
         font-size: 13px;
@@ -415,13 +425,13 @@
         font-size: 27vw;
       }
       .footer__fog {
-        height: 7%;
+        height: 10%;
       }
     }
 
     @media (max-width: 359px) {
       .footer__content {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
       }
     }
 
@@ -469,18 +479,14 @@
         </svg>
         Get Grauque today
       </a>
-      <p class="brand__copy">© 2026 Grauque Inc. - Built by Pranav.</p>
+      <p class="brand__copy">© 2026 Grauque Inc. - Built by thepc101.</p>
       <p class="brand__by">
         Built with <span class="brand__heart" aria-label="love">💙</span> by
         <span class="brand__author">
           <span class="brand__avatar" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <rect width="24" height="24" fill="#e6e6e3" />
-              <circle cx="12" cy="9.2" r="4.4" fill="#1b1b1b" />
-              <path d="M3 25c0-6 4-9.4 9-9.4S21 19 21 25Z" fill="#1b1b1b" />
-            </svg>
+            <img src="build/creator.jpg" alt="thepc101" />
           </span>
-          Pranav
+          thepc101
         </span>
       </p>
       <ul class="brand__status" aria-label="Grauque status">
@@ -496,19 +502,7 @@
       </ul>
     </div>
 
-    <!-- Column 1: Menu -->
-    <nav class="col col--menu" aria-label="Menu">
-      <h3 class="col__title">Menu</h3>
-      <ul class="col__list">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#study-suite">Study Suite</a></li>
-        <li><a href="#pdf-extract">PDF Analysis</a></li>
-        <li><a href="#ai-memory">Persistent Memory</a></li>
-        <li><a href="#voice">Voice Dictation</a></li>
-      </ul>
-    </nav>
-
-    <!-- Column 2: Essentials -->
+    <!-- Column 1: Essentials -->
     <nav class="col" aria-label="Essentials">
       <h3 class="col__title">Essentials</h3>
       <ul class="col__list">
@@ -520,7 +514,7 @@
       </ul>
     </nav>
 
-    <!-- Column 3: Powered by -->
+    <!-- Column 2: Powered by -->
     <nav class="col" aria-label="Powered by">
       <h3 class="col__title">Powered by</h3>
       <ul class="col__list">
@@ -530,7 +524,7 @@
         <li><a href="https://katex.org" target="_blank" rel="noopener">KaTeX LaTeX Math</a></li>
         <li><a href="https://github.com/openai/whisper" target="_blank" rel="noopener">Whisper Large v3</a></li>
         <li><a href="https://www.electronjs.org" target="_blank" rel="noopener">Electron 33</a></li>
-        <li><a href="https://deepmind.google" target="_blank" rel="noopener">Antigravity Design</a></li>
+        <li><a href="https://apple.com" target="_blank" rel="noopener">macOS Sequoia Design</a></li>
       </ul>
     </nav>
   </div>
