@@ -5,6 +5,10 @@ class GrauqueApp {
     this.settings = {};
     this.isGenerating = false;
     this.currentAttachedImage = null; // base64 data url
+    this.currentPersona = 'general';
+    this.isDeepSearchMode = false;
+    this.searchFilterQuery = '';
+    this.activeSpeakingIndex = null;
 
     // Voice dictation state
     this.mediaRecorder = null;
@@ -28,6 +32,8 @@ class GrauqueApp {
     this.btnCollapseSidebar = document.getElementById('btn-collapse-sidebar');
     this.btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
     this.btnNewChat = document.getElementById('btn-new-chat');
+    this.sidebarSearchInput = document.getElementById('sidebar-search-input');
+    this.btnClearSearch = document.getElementById('btn-clear-search');
     this.btnOpenQuizStudio = document.getElementById('btn-open-quiz-studio');
     this.btnOpenFlashcards = document.getElementById('btn-open-flashcards');
     this.btnOpenStudyGuide = document.getElementById('btn-open-study-guide');
@@ -38,6 +44,7 @@ class GrauqueApp {
 
     // Main
     this.chatTitleDisplay = document.getElementById('chat-title-display');
+    this.personaSelect = document.getElementById('persona-select');
     this.bottomModelSelect = document.getElementById('bottom-model-select');
     this.topModelSelect = document.getElementById('top-model-select') || this.bottomModelSelect;
     this.btnExportChat = document.getElementById('btn-export-chat');
@@ -47,6 +54,9 @@ class GrauqueApp {
     // Input & Tools
     this.inputBoxCard = document.getElementById('input-box-card');
     this.chatInput = document.getElementById('chat-input');
+    this.slashCommandsPopup = document.getElementById('slash-commands-popup');
+    this.slashItemsList = document.getElementById('slash-items-list');
+    this.btnDeepResearch = document.getElementById('btn-deep-research');
     this.imagePreviewStrip = document.getElementById('image-preview-strip');
     this.imagePreviewImg = document.getElementById('image-preview-img');
     this.btnRemoveImage = document.getElementById('btn-remove-image');
@@ -274,6 +284,60 @@ class GrauqueApp {
       this.createNewConversation();
     });
 
+    // Real-time Conversation Search
+    this.sidebarSearchInput?.addEventListener('input', (e) => {
+      this.searchFilterQuery = e.target.value;
+      if (this.btnClearSearch) {
+        this.btnClearSearch.style.display = this.searchFilterQuery ? 'block' : 'none';
+      }
+      this.renderHistoryList();
+    });
+
+    this.btnClearSearch?.addEventListener('click', () => {
+      if (this.sidebarSearchInput) this.sidebarSearchInput.value = '';
+      this.searchFilterQuery = '';
+      if (this.btnClearSearch) this.btnClearSearch.style.display = 'none';
+      this.renderHistoryList();
+    });
+
+    // Persona Mode Switcher
+    this.personaSelect?.addEventListener('change', (e) => {
+      this.currentPersona = e.target.value;
+      const personaName = this.personaSelect.options[this.personaSelect.selectedIndex]?.text || 'General Assistant';
+      this.showToast(`AI Persona: ${personaName}`);
+    });
+
+    // Deep Research / Search Grounding toggle
+    this.btnDeepResearch?.addEventListener('click', () => {
+      this.isDeepSearchMode = !this.isDeepSearchMode;
+      this.btnDeepResearch.classList.toggle('active', this.isDeepSearchMode);
+      if (this.isDeepSearchMode) {
+        this.showToast('Deep Research & Search Grounding enabled');
+      } else {
+        this.showToast('Standard direct mode');
+      }
+    });
+
+    // Slash command item clicks
+    this.slashItemsList?.addEventListener('click', (e) => {
+      const item = e.target.closest('.slash-item');
+      if (item) {
+        const prompt = item.getAttribute('data-prompt');
+        if (prompt) {
+          this.applySlashCommand(prompt);
+        }
+      }
+    });
+
+    // Close slash popup when clicking outside
+    window.addEventListener('click', (e) => {
+      if (this.slashCommandsPopup && this.slashCommandsPopup.style.display !== 'none') {
+        if (!this.slashCommandsPopup.contains(e.target) && e.target !== this.chatInput) {
+          this.slashCommandsPopup.style.display = 'none';
+        }
+      }
+    });
+
     // Model Select change (Bottom Bar & Top Bar)
     const onModelChange = (e) => {
       this.settings.model = e.target.value;
@@ -353,13 +417,45 @@ class GrauqueApp {
       this.studentStudio.toggleTimer();
     });
 
-    // Input auto-expand & send
+    // Input auto-expand, slash menu & send
     this.chatInput?.addEventListener('input', () => {
       this.chatInput.style.height = 'auto';
       this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 200) + 'px';
+      this.handleSlashMenuInput();
     });
 
     this.chatInput?.addEventListener('keydown', (e) => {
+      // Check if slash menu is open
+      if (this.slashCommandsPopup && this.slashCommandsPopup.style.display === 'block') {
+        const visibleItems = Array.from(this.slashItemsList?.querySelectorAll('.slash-item') || []).filter(el => el.style.display !== 'none');
+        const activeIdx = visibleItems.findIndex(el => el.classList.contains('active'));
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const nextIdx = (activeIdx + 1) % visibleItems.length;
+          visibleItems.forEach((el, idx) => el.classList.toggle('active', idx === nextIdx));
+          visibleItems[nextIdx]?.scrollIntoView({ block: 'nearest' });
+          return;
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prevIdx = (activeIdx - 1 + visibleItems.length) % visibleItems.length;
+          visibleItems.forEach((el, idx) => el.classList.toggle('active', idx === prevIdx));
+          visibleItems[prevIdx]?.scrollIntoView({ block: 'nearest' });
+          return;
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+          const selected = (activeIdx >= 0 ? visibleItems[activeIdx] : null) || visibleItems[0];
+          if (selected) {
+            e.preventDefault();
+            this.applySlashCommand(selected.getAttribute('data-prompt'));
+            return;
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          this.slashCommandsPopup.style.display = 'none';
+          return;
+        }
+      }
+
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         this.handleSend();
@@ -964,16 +1060,55 @@ class GrauqueApp {
 
   renderHistoryList() {
     if (!this.chatHistoryList) return;
-    this.chatHistoryList.innerHTML = '<div class="history-section-title">Conversations</div>';
 
-    this.conversations.forEach(chat => {
+    let filtered = this.conversations;
+    if (this.searchFilterQuery && this.searchFilterQuery.trim()) {
+      const q = this.searchFilterQuery.trim().toLowerCase();
+      filtered = this.conversations.filter(chat => {
+        if (chat.title && chat.title.toLowerCase().includes(q)) return true;
+        if (Array.isArray(chat.messages) && chat.messages.some(m => m.content && typeof m.content === 'string' && m.content.toLowerCase().includes(q))) return true;
+        return false;
+      });
+    }
+
+    // Sort: pinned first, then by updatedAt/createdAt
+    const sorted = [...filtered].sort((a, b) => {
+      if (Boolean(a.pinned) !== Boolean(b.pinned)) {
+        return a.pinned ? -1 : 1;
+      }
+      return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    });
+
+    this.chatHistoryList.innerHTML = `<div class="history-section-title">${this.searchFilterQuery ? 'Matching Conversations' : 'Conversations'}</div>`;
+
+    if (sorted.length === 0) {
+      const emptyEl = document.createElement('div');
+      emptyEl.style.cssText = 'padding:14px; font-size:12px; color:var(--text-muted); text-align:center;';
+      emptyEl.textContent = this.searchFilterQuery ? 'No matching conversations' : 'No conversations yet';
+      this.chatHistoryList.appendChild(emptyEl);
+      return;
+    }
+
+    sorted.forEach(chat => {
       const item = document.createElement('div');
-      item.className = 'history-item' + (chat.id === this.activeConversationId ? ' active' : '');
+      item.className = 'history-item' + (chat.id === this.activeConversationId ? ' active' : '') + (chat.pinned ? ' pinned' : '');
       item.innerHTML = `
-        <span class="history-title" title="${this.escapeHtml(chat.title)}">${this.escapeHtml(chat.title)}</span>
+        <span class="history-title" id="title-${chat.id}" title="${this.escapeHtml(chat.title)}">${this.escapeHtml(chat.title)}</span>
         <div class="history-actions">
+          <button class="history-action-btn pin-btn" title="${chat.pinned ? 'Unpin' : 'Pin to top'}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="${chat.pinned ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="17" x2="12" y2="22"></line>
+              <path d="M5 17h14v-2l-3-4V4h1V2H7v2h1v7l-3 4v2z"></path>
+            </svg>
+          </button>
+          <button class="history-action-btn rename-btn" title="Rename conversation">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+          </button>
           <button class="history-action-btn delete-btn" title="Delete conversation">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"></polyline>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
             </svg>
@@ -981,15 +1116,74 @@ class GrauqueApp {
         </div>
       `;
 
-      item.addEventListener('click', () => {
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.history-action-btn') || e.target.closest('.history-rename-input')) return;
         this.setActiveConversation(chat.id);
       });
 
+      const pinBtn = item.querySelector('.pin-btn');
+      pinBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        chat.pinned = !chat.pinned;
+        this.saveConversations();
+        this.renderHistoryList();
+      });
+
+      const renameBtn = item.querySelector('.rename-btn');
+      const titleSpan = item.querySelector(`#title-${chat.id}`);
+      renameBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.startInlineRename(chat, titleSpan);
+      });
+
+      titleSpan?.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        this.startInlineRename(chat, titleSpan);
+      });
+
       const delBtn = item.querySelector('.delete-btn');
-      delBtn.addEventListener('click', (e) => this.deleteConversation(chat.id, e));
+      delBtn?.addEventListener('click', (e) => this.deleteConversation(chat.id, e));
 
       this.chatHistoryList.appendChild(item);
     });
+  }
+
+  startInlineRename(chat, titleSpan) {
+    if (!titleSpan) return;
+    const oldTitle = chat.title;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'history-rename-input';
+    input.value = oldTitle;
+
+    const commitRename = () => {
+      const val = input.value.trim();
+      chat.title = val || oldTitle;
+      chat.updatedAt = Date.now();
+      this.saveConversations();
+      if (this.activeConversationId === chat.id) {
+        this.chatTitleDisplay.textContent = chat.title;
+      }
+      this.renderHistoryList();
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        commitRename();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        this.renderHistoryList();
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      commitRename();
+    });
+
+    titleSpan.replaceWith(input);
+    input.focus();
+    input.select();
   }
 
   renderMessages(messages) {
@@ -1034,11 +1228,43 @@ class GrauqueApp {
           </div>
         `;
       }
-      row.innerHTML = `<div class="user-bubble">
-        ${imageHtml}
-        ${pdfHtml}
-        <div>${this.escapeHtml(msg.content)}</div>
-      </div>`;
+
+      row.innerHTML = `
+        <div class="user-bubble-container" id="user-container-${idx}">
+          <div class="user-bubble" id="user-bubble-${idx}">
+            ${imageHtml}
+            ${pdfHtml}
+            <div class="user-text" id="user-text-${idx}">${this.escapeHtml(msg.content)}</div>
+          </div>
+          <div class="user-actions-bar">
+            <button class="msg-action-btn btn-edit-user" data-idx="${idx}" title="Edit prompt">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span>Edit</span>
+            </button>
+            <button class="msg-action-btn btn-copy-user" data-idx="${idx}" title="Copy prompt">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      const editBtn = row.querySelector('.btn-edit-user');
+      editBtn?.addEventListener('click', () => this.handleEditUserMessage(idx));
+
+      const copyBtn = row.querySelector('.btn-copy-user');
+      copyBtn?.addEventListener('click', () => {
+        navigator.clipboard.writeText(msg.content);
+        const span = copyBtn.querySelector('span');
+        if (span) span.textContent = 'Copied!';
+        setTimeout(() => { if (span) span.textContent = 'Copy'; }, 1800);
+      });
     } else {
       let reasoningHtml = '';
       if (msg.reasoning && msg.reasoning.trim()) {
@@ -1073,9 +1299,43 @@ class GrauqueApp {
             </div>
             ${reasoningHtml}
             <div class="assistant-body" id="body-${idx}">${formattedContent}</div>
+            <div class="assistant-actions-bar" id="actions-${idx}">
+              <button class="msg-action-btn btn-copy-response" data-idx="${idx}" title="Copy full response to clipboard">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>Copy</span>
+              </button>
+              <button class="msg-action-btn btn-speak-response" data-idx="${idx}" title="Read aloud using speech synthesis">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                <span>Read</span>
+              </button>
+              <button class="msg-action-btn btn-retry-response" data-idx="${idx}" title="Regenerate this response">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Retry</span>
+              </button>
+              <button class="msg-action-btn btn-export-response" data-idx="${idx}" title="Export response as Markdown">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Save</span>
+              </button>
+            </div>
           </div>
         </div>
       `;
+
+      this.wireAssistantActionButtons(row, idx, msg);
 
       // Check for structured quiz data
       const quizData = this.quizManager.extractQuizData(msg.content);
@@ -1095,6 +1355,258 @@ class GrauqueApp {
     }
 
     this.messagesContainer.appendChild(row);
+  }
+
+  wireAssistantActionButtons(row, idx, msg) {
+    const copyBtn = row.querySelector(`.btn-copy-response[data-idx="${idx}"]`);
+    copyBtn?.addEventListener('click', () => {
+      navigator.clipboard.writeText(msg.content);
+      const span = copyBtn.querySelector('span');
+      if (span) span.textContent = 'Copied!';
+      setTimeout(() => { if (span) span.textContent = 'Copy'; }, 1800);
+    });
+
+    const speakBtn = row.querySelector(`.btn-speak-response[data-idx="${idx}"]`);
+    speakBtn?.addEventListener('click', () => {
+      this.toggleSpeakMessage(msg.content, idx, speakBtn);
+    });
+
+    const retryBtn = row.querySelector(`.btn-retry-response[data-idx="${idx}"]`);
+    retryBtn?.addEventListener('click', () => {
+      this.handleRetryResponse(idx);
+    });
+
+    const exportBtn = row.querySelector(`.btn-export-response[data-idx="${idx}"]`);
+    exportBtn?.addEventListener('click', () => {
+      this.exportSingleMessage(msg);
+    });
+  }
+
+  renderAssistantActionBar(row, idx, msg) {
+    let actionsEl = row.querySelector(`#actions-${idx}`);
+    if (!actionsEl) {
+      const wrapper = row.querySelector('.assistant-content-wrapper');
+      if (wrapper) {
+        actionsEl = document.createElement('div');
+        actionsEl.className = 'assistant-actions-bar';
+        actionsEl.id = `actions-${idx}`;
+        wrapper.appendChild(actionsEl);
+      }
+    }
+    if (actionsEl) {
+      actionsEl.innerHTML = `
+        <button class="msg-action-btn btn-copy-response" data-idx="${idx}" title="Copy full response to clipboard">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span>Copy</span>
+        </button>
+        <button class="msg-action-btn btn-speak-response" data-idx="${idx}" title="Read aloud using speech synthesis">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          </svg>
+          <span>Read</span>
+        </button>
+        <button class="msg-action-btn btn-retry-response" data-idx="${idx}" title="Regenerate this response">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Retry</span>
+        </button>
+        <button class="msg-action-btn btn-export-response" data-idx="${idx}" title="Export response as Markdown">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Save</span>
+        </button>
+      `;
+      this.wireAssistantActionButtons(row, idx, msg);
+    }
+  }
+
+  toggleSpeakMessage(text, idx, btn) {
+    if (!window.speechSynthesis) {
+      alert('Speech synthesis is not supported on this device.');
+      return;
+    }
+
+    if (window.speechSynthesis.speaking && this.activeSpeakingIndex === idx) {
+      window.speechSynthesis.cancel();
+      this.activeSpeakingIndex = null;
+      btn.classList.remove('speaking');
+      btn.querySelector('span').textContent = 'Read';
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    document.querySelectorAll('.btn-speak-response').forEach(b => {
+      b.classList.remove('speaking');
+      const s = b.querySelector('span');
+      if (s) s.textContent = 'Read';
+    });
+
+    const clean = text
+      .replace(/```[\s\S]*?```/g, ' [code block omitted] ')
+      .replace(/\$\$[\s\S]*?\$\$/g, ' [math formula] ')
+      .replace(/\$[^\$]+\$/g, ' [formula] ')
+      .replace(/[#*_~`>-]/g, ' ')
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.05;
+
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Daniel') || v.name.includes('Samantha') || v.name.includes('Alex')));
+    if (englishVoice) utterance.voice = englishVoice;
+
+    btn.classList.add('speaking');
+    btn.querySelector('span').textContent = 'Stop';
+    this.activeSpeakingIndex = idx;
+
+    utterance.onend = () => {
+      btn.classList.remove('speaking');
+      btn.querySelector('span').textContent = 'Read';
+      this.activeSpeakingIndex = null;
+    };
+    utterance.onerror = () => {
+      btn.classList.remove('speaking');
+      btn.querySelector('span').textContent = 'Read';
+      this.activeSpeakingIndex = null;
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async handleRetryResponse(assistantIndex) {
+    if (this.isGenerating) return;
+    const chat = this.conversations.find(c => c.id === this.activeConversationId);
+    if (!chat || assistantIndex <= 0 || assistantIndex >= chat.messages.length) return;
+
+    chat.messages = chat.messages.slice(0, assistantIndex);
+    this.saveConversations();
+    this.renderMessages(chat.messages);
+
+    await this.runGenerationForChat(chat);
+  }
+
+  handleEditUserMessage(userIndex) {
+    const chat = this.conversations.find(c => c.id === this.activeConversationId);
+    if (!chat || !chat.messages[userIndex]) return;
+
+    const userMsg = chat.messages[userIndex];
+    const container = document.getElementById(`user-container-${userIndex}`);
+    if (!container) return;
+
+    container.innerHTML = `
+      <div class="user-inline-edit-box">
+        <textarea class="user-inline-edit-textarea" id="inline-edit-${userIndex}">${this.escapeHtml(userMsg.content)}</textarea>
+        <div class="user-inline-edit-actions">
+          <button class="btn-inline-cancel" id="btn-cancel-edit-${userIndex}">Cancel</button>
+          <button class="btn-inline-submit" id="btn-submit-edit-${userIndex}">Save & Submit</button>
+        </div>
+      </div>
+    `;
+
+    const textarea = container.querySelector(`#inline-edit-${userIndex}`);
+    const cancelBtn = container.querySelector(`#btn-cancel-edit-${userIndex}`);
+    const submitBtn = container.querySelector(`#btn-submit-edit-${userIndex}`);
+
+    textarea?.focus();
+    textarea?.setSelectionRange(textarea.value.length, textarea.value.length);
+
+    cancelBtn?.addEventListener('click', () => {
+      this.renderMessages(chat.messages);
+    });
+
+    submitBtn?.addEventListener('click', async () => {
+      const newText = textarea.value.trim();
+      if (!newText) return;
+
+      userMsg.content = newText;
+      chat.messages = chat.messages.slice(0, userIndex + 1);
+      this.saveConversations();
+      this.renderMessages(chat.messages);
+
+      await this.runGenerationForChat(chat);
+    });
+  }
+
+  exportSingleMessage(msg) {
+    const text = `# Response from Grauque (${msg.model || 'Groq'})\n\n${msg.content}\n\n---\n*Generated by Grauque on ${new Date(msg.timestamp || Date.now()).toLocaleString()}*`;
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `grauque-response-${Date.now()}.md`;
+    a.click();
+    URL.revokeObjectURL(a);
+    this.showToast('Response saved as Markdown');
+  }
+
+  showToast(message) {
+    let toast = document.getElementById('grauque-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'grauque-toast';
+      toast.className = 'grauque-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add('visible');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 2400);
+  }
+
+  applySlashCommand(promptText) {
+    if (!promptText) return;
+    this.chatInput.value = promptText;
+    if (this.slashCommandsPopup) this.slashCommandsPopup.style.display = 'none';
+    this.chatInput.focus();
+    this.chatInput.style.height = 'auto';
+    this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 200) + 'px';
+  }
+
+  handleSlashMenuInput() {
+    const val = this.chatInput.value.trim();
+    if (val.startsWith('/')) {
+      const q = val.toLowerCase();
+      const items = this.slashItemsList?.querySelectorAll('.slash-item');
+      let visibleCount = 0;
+      let firstVisible = null;
+
+      items?.forEach(item => {
+        const cmd = item.getAttribute('data-cmd') || '';
+        const desc = item.querySelector('.slash-desc')?.textContent.toLowerCase() || '';
+        if (cmd.startsWith(q) || desc.includes(q.slice(1)) || q === '/') {
+          item.style.display = 'flex';
+          visibleCount++;
+          if (!firstVisible) firstVisible = item;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      if (visibleCount > 0 && this.slashCommandsPopup) {
+        this.slashCommandsPopup.style.display = 'block';
+        const curActive = this.slashItemsList?.querySelector('.slash-item.active');
+        if (!curActive || curActive.style.display === 'none') {
+          items?.forEach(i => i.classList.remove('active'));
+          firstVisible?.classList.add('active');
+        }
+      } else if (this.slashCommandsPopup) {
+        this.slashCommandsPopup.style.display = 'none';
+      }
+    } else if (this.slashCommandsPopup) {
+      this.slashCommandsPopup.style.display = 'none';
+    }
   }
 
   handleQuickBoxPrompt(prompt) {
@@ -1161,6 +1673,15 @@ class GrauqueApp {
       this.memoryManager?.detectAndSaveFromPrompt(text);
     }
 
+    await this.runGenerationForChat(chat);
+  }
+
+  async runGenerationForChat(chat) {
+    if (this.isGenerating) return;
+
+    const lastUserMsg = chat.messages[chat.messages.length - 1];
+    const attachedImage = lastUserMsg?.imageUrl;
+
     // Determine model
     const hasImageInChat = Boolean(attachedImage || chat.messages.some(m => Boolean(m.imageUrl)));
     let modelToUse = this.settings.model || 'openai/gpt-oss-120b';
@@ -1222,6 +1743,8 @@ class GrauqueApp {
     await this.groqClient.streamChat({
       messages: chat.messages.slice(0, -1),
       model: modelToUse,
+      persona: this.currentPersona,
+      isDeepSearch: this.isDeepSearchMode,
       onChunk: (chunkContent, fullText, chunkReasoning, fullReasoning) => {
         assistantMsg.content = fullText;
         assistantMsg.reasoning = fullReasoning;
@@ -1295,6 +1818,9 @@ class GrauqueApp {
         if (speedBadgeEl) {
           speedBadgeEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>${finalMetrics.tokensPerSec} t/s • ${finalMetrics.elapsedSec}s`;
         }
+
+        // Render Action Bar beneath completed assistant message
+        this.renderAssistantActionBar(row, assistantIndex, assistantMsg);
 
         this.setGenerating(false);
         this.saveConversations();

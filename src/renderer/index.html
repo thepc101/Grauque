@@ -40,6 +40,16 @@
         </button>
       </div>
 
+      <!-- Real-time Conversation Search -->
+      <div class="sidebar-search-box">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" class="sidebar-search-input" id="sidebar-search-input" placeholder="Search conversations..." autocomplete="off" spellcheck="false" />
+        <button class="sidebar-search-clear" id="btn-clear-search" title="Clear search" style="display:none;">&times;</button>
+      </div>
+
       <div class="sidebar-history" id="chat-history-list">
         <div class="history-section-title">Recent Conversations</div>
         <!-- Populated via app.js -->
@@ -72,6 +82,21 @@
         </div>
 
         <div class="top-bar-right">
+          <!-- Persona Selector Pill -->
+          <div class="persona-picker-pill" id="persona-picker-pill" title="AI Persona Mode">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <select class="persona-select" id="persona-select" title="Switch AI Persona">
+              <option value="general" selected>General Assistant</option>
+              <option value="coder">Software Engineer</option>
+              <option value="tutor">Socratic Tutor</option>
+              <option value="analyst">Executive Analyst</option>
+              <option value="writer">Creative Writer</option>
+            </select>
+          </div>
+
           <!-- Pomodoro Study Focus Timer -->
           <div class="pomodoro-timer-pill" id="pomodoro-timer-pill" title="Pomodoro Focus Timer">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -223,7 +248,73 @@
             <button class="voice-banner-stop-btn" id="btn-stop-voice">Done (Stop & Transcribe)</button>
           </div>
 
-          <textarea class="main-textarea" id="chat-input" placeholder="Ask Grauque anything, attach a PDF/Image, or dictate via microphone... (Shift+Enter for newline, Enter to send)" rows="1"></textarea>
+          <!-- Floating Slash Commands Popup Menu -->
+          <div class="slash-commands-popup" id="slash-commands-popup" style="display:none;">
+            <div class="slash-popup-header">
+              <span>Quick AI Tools (Tab or Enter to select)</span>
+              <span class="slash-popup-esc">ESC to dismiss</span>
+            </div>
+            <div class="slash-items-list" id="slash-items-list">
+              <div class="slash-item active" data-cmd="/quiz" data-prompt="Create an interactive 5-question multiple choice quiz with detailed answer explanations on: ">
+                <span class="slash-icon">📝</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/quiz</span>
+                  <span class="slash-desc">Interactive self-grading quiz with instant feedback</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/flashcards" data-prompt="Create a high-yield flashcard deck with key terms and definitions for: ">
+                <span class="slash-icon">🗂️</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/flashcards</span>
+                  <span class="slash-desc">Interactive 3D flip-cards with spaced recall</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/cram" data-prompt="Create an exam cram sheet and study cheat sheet with key formulas, core concepts, and common pitfalls for: ">
+                <span class="slash-icon">📖</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/cram</span>
+                  <span class="slash-desc">High-yield study guide & formula cheat sheet</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/tutor" data-prompt="Act as a Socratic tutor. Walk me through solving this step-by-step and ask me guided questions before giving the answer: ">
+                <span class="slash-icon">🧠</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/tutor</span>
+                  <span class="slash-desc">Step-by-step problem solver with progressive hints</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/code" data-prompt="Write clean, modular, production-grade code with error handling, type hints, and unit tests for: ">
+                <span class="slash-icon">💻</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/code</span>
+                  <span class="slash-desc">Production code with tests, types & edge cases</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/summarize" data-prompt="Provide a comprehensive executive summary with key takeaways and bullet points for: ">
+                <span class="slash-icon">⚡</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/summarize</span>
+                  <span class="slash-desc">Executive bullet-point summary & key takeaways</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/explain" data-prompt="Explain this concept clearly and intuitively like I'm 5 years old (ELIF5) using relatable analogies: ">
+                <span class="slash-icon">💡</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/explain</span>
+                  <span class="slash-desc">Simple ELIF5 explanation with intuitive analogies</span>
+                </div>
+              </div>
+              <div class="slash-item" data-cmd="/math" data-prompt="Solve this mathematical problem step-by-step with full proofs and formulas formatted in KaTeX LaTeX ($ and $$): ">
+                <span class="slash-icon">📐</span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/math</span>
+                  <span class="slash-desc">Math step-by-step proof with KaTeX LaTeX notation</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <textarea class="main-textarea" id="chat-input" placeholder="Ask Grauque anything, type / for commands, attach a PDF/Image, or dictate via microphone... (Shift+Enter for newline, Enter to send)" rows="1"></textarea>
           
           <div class="input-toolbar">
             <div class="toolbar-left">
@@ -236,6 +327,15 @@
               <input type="file" id="unified-file-input" accept="image/*,.pdf,application/pdf" style="display:none;" />
               <input type="file" id="image-file-input" accept="image/*" style="display:none;" />
               <input type="file" id="pdf-file-input" accept=".pdf,application/pdf" style="display:none;" />
+
+              <!-- Deep Research & Grounding Toggle Button -->
+              <button class="toolbar-icon-btn" id="btn-deep-research" title="Toggle Deep Research & Search Grounding (Citations & Synthesis)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+              </button>
 
               <!-- Student Study Tools 3-Line Menu Button & Floating Popup -->
               <div class="study-tools-wrapper">
@@ -331,8 +431,11 @@
                 </svg>
                 <select class="bottom-model-select" id="bottom-model-select" title="Choose AI Model">
                   <option value="openai/gpt-oss-120b" selected>GPT-OSS 120B (Reasoning)</option>
+                  <option value="llama-3.3-70b-versatile">Llama 3.3 70B (128k Context)</option>
+                  <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B (Deep Reasoning)</option>
                   <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Vision & Images)</option>
                   <option value="openai/gpt-oss-20b">GPT-OSS 20B (Fast)</option>
+                  <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
                   <option value="allam-2-7b">Allam 2 7B</option>
                 </select>
               </div>
@@ -402,8 +505,11 @@
           </label>
           <select class="form-input" id="setting-default-model">
             <option value="openai/gpt-oss-120b" selected>OpenAI GPT-OSS 120B (Reasoning • Default)</option>
+            <option value="llama-3.3-70b-versatile">Meta Llama 3.3 70B (128k Versatile)</option>
+            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 Distill 70B (Deep Reasoning)</option>
             <option value="qwen/qwen3.8-27b">Qwen 3.8 27B (Vision & Image Support)</option>
             <option value="openai/gpt-oss-20b">OpenAI GPT-OSS 20B (Fast)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant)</option>
             <option value="allam-2-7b">Allam 2 7B</option>
           </select>
         </div>

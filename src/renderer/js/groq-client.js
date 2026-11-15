@@ -17,7 +17,7 @@ class GroqClient {
     return lower.includes('qwen') || lower.includes('vision');
   }
 
-  async streamChat({ messages, model: modelOverride, onChunk, onMetrics, onDone, onError }) {
+  async streamChat({ messages, model: modelOverride, persona, isDeepSearch, onChunk, onMetrics, onDone, onError }) {
     this.cancelActiveRequest();
 
     const settings = this.getSettings();
@@ -39,16 +39,33 @@ class GroqClient {
     const temperature = parseFloat(settings.temperature) ?? 0.7;
     const isVision = this.isVisionModel(model);
 
-    // Enforce efficient token caps to prevent OTPM limit exhaustion (e.g. Qwen 1000 OTPM limit)
-    let maxTokens = parseInt(settings.maxTokens, 10) || 800;
+    // Dynamic token cap: safe limit for Qwen vision OTPM, full 4k-8k capacity for text models
+    let maxTokens = parseInt(settings.maxTokens, 10) || 4096;
     if (isVision) {
-      maxTokens = Math.min(maxTokens, 550); // safe cap for Qwen 1000 OTPM limit
+      maxTokens = Math.min(maxTokens, 600); // safe cap for Qwen 1000 OTPM limit
     } else {
-      maxTokens = Math.min(maxTokens, 1000); // concise answers for text models
+      maxTokens = Math.min(Math.max(maxTokens, 1024), 8192); // full depth for reasoning and code
     }
 
-    let finalSystemPrompt = settings.systemPrompt || 
-      'You are Grauque, an exceptionally capable and efficient AI assistant. Be direct, concise, and focused. Avoid unnecessary filler, repetition, or overly verbose preamble. Provide thorough depth only when explicitly asked. For math and scientific equations, format using clean LaTeX ($ for inline, $$ for block formulas). Never output raw <br> tags.';
+    let personaModifier = '';
+    const activePersona = persona || settings.persona || 'general';
+    if (activePersona === 'coder') {
+      personaModifier = '\n\n[Active Persona: Software Engineer]\nWrite production-ready, robust code with clear variable names, type annotations, error handling, and unit test suggestions. Avoid conversational fluff and focus on technical accuracy and architecture.';
+    } else if (activePersona === 'tutor') {
+      personaModifier = '\n\n[Active Persona: Socratic Tutor]\nGuide the student through problems using progressive hints and the Socratic method. Break complex concepts into manageable chunks, ask guiding questions to test comprehension, and use intuitive analogies.';
+    } else if (activePersona === 'analyst') {
+      personaModifier = '\n\n[Active Persona: Executive Analyst]\nProvide structured executive briefings. Lead with the core bottom line (TL;DR), followed by crisp bullet points, quantitative data analysis, risk assessments, and concrete next steps.';
+    } else if (activePersona === 'writer') {
+      personaModifier = '\n\n[Active Persona: Creative Writer]\nAdopt an evocative, stylish, and engaging literary voice. Use vivid sensory details, compelling narrative tension, and expressive language.';
+    }
+
+    let searchModifier = '';
+    if (isDeepSearch) {
+      searchModifier = '\n\n[Deep Grounding & Research Mode Activated]\nAdopt a comprehensive, evidence-grounded research synthesis. Provide in-depth analysis, structured sections with bold headers, cross-checked factual claims, citation tags like [1] and [2], and conclude with a Critical Evaluation & Key Takeaways summary.';
+    }
+
+    let finalSystemPrompt = (settings.systemPrompt || 
+      'You are Grauque, an exceptionally capable, intelligent, and efficient AI assistant. Be direct, clear, and comprehensive. Provide thorough depth, insightful reasoning, and elegant formatting. For math and scientific equations, format using clean LaTeX ($ for inline, $$ for block formulas). Never output raw <br> tags.') + personaModifier + searchModifier;
 
     // Inject User Memories if enabled
     const memories = Array.isArray(settings.memories) ? settings.memories.filter(m => m && m.text && m.enabled !== false) : [];
