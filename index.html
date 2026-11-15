@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet" />
   <style>
     :root {
       --paper: #09090c;
@@ -15,10 +15,10 @@
       --muted: #71717a;
       --wordmark: rgba(255, 255, 255, 0.12);
       --mist: #151322;
-      --accent: #0a84ff;
-      --accent-hover: #409cff;
-      --font-display: "DM Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
-      --font-body: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+      --accent: #a855f7;
+      --accent-hover: #c084fc;
+      --font-display: "Plus Jakarta Sans", "DM Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif;
+      --font-body: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
       --font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     *, *::before, *::after { box-sizing: border-box; }
@@ -200,13 +200,13 @@
       font-weight: 600;
       letter-spacing: -0.01em;
       width: fit-content;
-      box-shadow: 0 4px 16px rgba(10, 132, 255, 0.4);
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
       transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     }
     .brand__cta:hover {
       background: var(--accent-hover);
       transform: translateY(-1px);
-      box-shadow: 0 6px 22px rgba(10, 132, 255, 0.55);
+      box-shadow: 0 6px 22px rgba(168, 85, 247, 0.55);
     }
     .brand__cta svg {
       width: calc(14 * var(--u));
@@ -472,16 +472,16 @@
         Grauque
       </a>
       <h2 class="brand__title">The calm AI bar for macOS</h2>
-      <p class="brand__text">Grauque gathers ultra-fast Groq LPU inference, native Apple PDFKit document analysis, persistent AI memory, LaTeX math, student study decks, and voice dictation into one calm floating bar just above your Mac Dock.</p>
+      <p class="brand__text">Grauque gathers ultra-fast Groq LPU inference, native Apple PDFKit document analysis, persistent AI memory, LaTeX math, student study decks, and voice dictation into one calm floating bar just above your Mac Dock. <strong>Exclusively built for Intel Macs</strong> (x86_64 architecture, macOS 12+).</p>
       <a class="brand__cta" href="release/Grauque-1.0.0-mac-x64.dmg" download="Grauque-1.0.0-mac-x64.dmg">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M17.05 12.54c-.03-2.75 2.25-4.07 2.35-4.14-1.28-1.87-3.27-2.13-3.98-2.16-1.69-.17-3.3 1-4.16 1-.86 0-2.18-.97-3.59-.95-1.85.03-3.55 1.07-4.5 2.72-1.92 3.33-.49 8.25 1.38 10.95.91 1.32 2 2.8 3.43 2.75 1.38-.06 1.9-.89 3.56-.89 1.66 0 2.13.89 3.59.86 1.48-.03 2.42-1.34 3.33-2.67 1.05-1.53 1.48-3.02 1.5-3.1-.03-.01-2.88-1.1-2.91-4.37ZM14.31 4.46c.76-.92 1.27-2.2 1.13-3.46-1.09.04-2.41.73-3.19 1.64-.7.81-1.31 2.1-1.15 3.34 1.22.09 2.46-.62 3.21-1.52Z"/>
         </svg>
-        Get Grauque today
+        Download for Intel Mac (.dmg)
       </a>
       <p class="brand__copy">© 2026 Grauque Inc. - Built by thepc101.</p>
       <p class="brand__by">
-        Built with <span class="brand__heart" aria-label="love">💙</span> by
+        Built with <span class="brand__heart" aria-label="love">💜</span> by
         <span class="brand__author">
           <span class="brand__avatar" aria-hidden="true">
             <img src="build/creator.jpg" alt="thepc101" />
@@ -490,14 +490,14 @@
         </span>
       </p>
       <ul class="brand__status" aria-label="Grauque status">
+        <li class="chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+          Intel Macs Only (x86_64)
+        </li>
         <li class="chip"><span class="chip__dot" aria-hidden="true"></span>250+ tokens/sec on Groq</li>
         <li class="chip">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg>
           v1.0 · Shipped today
-        </li>
-        <li class="chip">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.2 9.4l6.1-.8Z" /></svg>
-          Rated 4.9 avg
         </li>
       </ul>
     </div>
@@ -506,7 +506,7 @@
     <nav class="col" aria-label="Essentials">
       <h3 class="col__title">Essentials</h3>
       <ul class="col__list">
-        <li><a href="release/Grauque-1.0.0-mac-x64.dmg" download="Grauque-1.0.0-mac-x64.dmg">Download Mac App</a></li>
+        <li><a href="release/Grauque-1.0.0-mac-x64.dmg" download="Grauque-1.0.0-mac-x64.dmg">Download for Intel Mac (.dmg)</a></li>
         <li><a href="https://github.com/thepc101/grauque" target="_blank" rel="noopener">GitHub Repository</a></li>
         <li><a href="https://console.groq.com/keys" target="_blank" rel="noopener">Get Groq API Key</a></li>
         <li><a href="https://github.com/thepc101/grauque#readme" target="_blank" rel="noopener">Documentation</a></li>
