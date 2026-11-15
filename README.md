@@ -10,7 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="release/Grauque-1.0.0-mac-x64.dmg"><img src="https://img.shields.io/badge/Download-macOS%20Intel%20(DMG)-0284C7?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS DMG" /></a>
+  <a href="https://github.com/thepc101/grauque/releases/download/v1.0.0/Grauque-1.0.0.dmg"><img src="https://img.shields.io/badge/Download-macOS%20Intel%20(DMG)-8B5CF6?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS DMG" /></a>
+  <a href="https://github.com/thepc101/grauque/releases/latest"><img src="https://img.shields.io/github/v/release/thepc101/grauque?style=for-the-badge&label=Latest%20Release&color=A855F7" alt="Latest Release" /></a>
 </p>
 
 <p align="center">
@@ -160,7 +161,7 @@ Built to optimize learning, active recall, and focus:
 
 ## 📥 Installation
 
-1. Download the latest installer: **[Grauque-1.0.0-mac-x64.dmg](release/Grauque-1.0.0-mac-x64.dmg)**.
+1. Download the latest installer: **[Grauque-1.0.0-mac-x64.dmg](https://github.com/thepc101/grauque/releases/download/v1.0.0/Grauque-1.0.0.dmg)** (or grab the latest DMG from [Releases](https://github.com/thepc101/grauque/releases/latest)).
 2. Double-click the DMG to open the installer window.
 3. Drag **Grauque** into your **Applications** folder.
 4. Launch **Grauque** from Applications or Spotlight (`⌘Space`).
