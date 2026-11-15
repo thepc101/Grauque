@@ -1,5 +1,6 @@
 class MarkdownRenderer {
   constructor() {
+    this.katexCache = new Map();
     this.md = window.markdownit({
       html: false, // safer
       xhtmlOut: true,
@@ -61,16 +62,28 @@ class MarkdownRenderer {
     if (window.katex) {
       const mathPlaceholders = [];
       const createPlaceholder = (latex, displayMode) => {
-        const id = `%%%KATEX_FORMULA_${mathPlaceholders.length}%%%`;
-        try {
-          const rendered = window.katex.renderToString(latex.trim(), {
-            displayMode: displayMode,
-            throwOnError: false
-          });
-          mathPlaceholders.push({ id, html: rendered });
-        } catch (e) {
-          mathPlaceholders.push({ id, html: `<code>${this.escapeHtml(latex)}</code>` });
+        const trimmed = latex.trim();
+        const cacheKey = `${displayMode ? 'D' : 'I'}:${trimmed}`;
+        let rendered = this.katexCache.get(cacheKey);
+
+        if (!rendered) {
+          try {
+            rendered = window.katex.renderToString(trimmed, {
+              displayMode: displayMode,
+              throwOnError: false
+            });
+            if (this.katexCache.size > 800) {
+              const firstKey = this.katexCache.keys().next().value;
+              this.katexCache.delete(firstKey);
+            }
+            this.katexCache.set(cacheKey, rendered);
+          } catch (e) {
+            rendered = `<code>${this.escapeHtml(latex)}</code>`;
+          }
         }
+
+        const id = `%%%KATEX_FORMULA_${mathPlaceholders.length}%%%`;
+        mathPlaceholders.push({ id, html: rendered });
         return id;
       };
 

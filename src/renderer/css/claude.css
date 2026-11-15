@@ -44,7 +44,7 @@
   --radius-md: 12px;
   --radius-lg: 18px;
   --radius-xl: 22px;
-  --backdrop-blur: blur(40px) saturate(200%);
+  --backdrop-blur: blur(20px) saturate(150%);
 }
 
 /* Apple 3D Squircle Logo Styling */
@@ -290,6 +290,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
 }
 
 .history-section-title {
@@ -312,6 +315,7 @@ body {
   color: var(--text-secondary);
   transition: all 0.12s ease;
   position: relative;
+  contain: layout style;
 }
 
 .history-item:hover {
@@ -526,6 +530,9 @@ body {
   flex-direction: column;
   gap: 24px;
   scroll-behavior: smooth;
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
 }
 
 .welcome-screen {
@@ -673,6 +680,7 @@ body {
   max-width: 820px;
   margin: 0 auto;
   animation: messageAppear 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  contain: layout style;
 }
 
 @keyframes messageAppear {

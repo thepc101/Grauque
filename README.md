@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/thepc101/grauque/releases/download/v1.0.0/Grauque-1.0.0.dmg"><img src="https://img.shields.io/badge/Download-macOS%20Intel%20(DMG)-8B5CF6?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS DMG" /></a>
+  <a href="https://github.com/thepc101/grauque/releases/download/v1.0.1/Grauque-1.0.1.dmg"><img src="https://img.shields.io/badge/Download-macOS%20Intel%20(DMG)-8B5CF6?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS DMG" /></a>
   <a href="https://github.com/thepc101/grauque/releases/latest"><img src="https://img.shields.io/github/v/release/thepc101/grauque?style=for-the-badge&label=Latest%20Release&color=A855F7" alt="Latest Release" /></a>
 </p>
 
@@ -166,7 +166,7 @@ Built to optimize learning, active recall, and focus:
 
 ## Installation
 
-1. Download the latest installer: **[Grauque-1.0.0-mac-x64.dmg](https://github.com/thepc101/grauque/releases/download/v1.0.0/Grauque-1.0.0.dmg)** (or grab the latest DMG from [Releases](https://github.com/thepc101/grauque/releases/latest)).
+1. Download the latest installer: **[Grauque-1.0.1-mac-x64.dmg](https://github.com/thepc101/grauque/releases/download/v1.0.1/Grauque-1.0.1.dmg)** (or grab the latest DMG from [Releases](https://github.com/thepc101/grauque/releases/latest)).
 2. Double-click the DMG to open the installer window.
 3. Drag **Grauque** into your **Applications** folder.
 4. Launch **Grauque** from Applications or Spotlight (`⌘Space`).
@@ -241,7 +241,7 @@ Grauque/
 │           ├── quiz-manager.js        # Multiple-choice active recall engine
 │           └── markdown-renderer.js   # Markdown-it + KaTeX math rendering
 └── release/
-    └── Grauque-1.0.0-mac-x64.dmg     # Ultra-compressed distributable disk image
+    └── Grauque-1.0.1-mac-x64.dmg     # Ultra-compressed distributable disk image
 ```
 
 ---

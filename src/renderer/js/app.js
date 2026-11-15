@@ -1757,6 +1757,55 @@ class GrauqueApp {
     const reasoningWrapEl = document.getElementById(`reasoning-wrapper-${assistantIndex}`);
     const speedBadgeEl = document.getElementById(`speed-badge-${assistantIndex}`);
 
+    // High-performance streaming render scheduler to eliminate DOM thrashing and lag
+    let renderPending = false;
+    let pendingText = '';
+    let pendingReasoning = '';
+    let lastRenderTime = 0;
+    const RENDER_THROTTLE_MS = 32;
+
+    const updateRender = () => {
+      renderPending = false;
+      lastRenderTime = performance.now();
+
+      if (pendingReasoning && reasoningWrapEl) {
+        reasoningWrapEl.innerHTML = `
+          <details class="reasoning-details" open>
+            <summary>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:5px;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Reasoning Analysis
+            </summary>
+            <div class="reasoning-content">${this.escapeHtml(pendingReasoning)}</div>
+          </details>
+        `;
+      }
+
+      if (pendingText) {
+        bodyEl.innerHTML = this.mdRenderer.render(pendingText) + '<span class="typing-cursor">▊</span>';
+      } else {
+        bodyEl.innerHTML = '<span class="typing-cursor">▊</span>';
+      }
+      this.scrollToBottom();
+    };
+
+    const scheduleRender = () => {
+      if (renderPending) return;
+      const now = performance.now();
+      const elapsed = now - lastRenderTime;
+      renderPending = true;
+      if (elapsed >= RENDER_THROTTLE_MS) {
+        requestAnimationFrame(updateRender);
+      } else {
+        setTimeout(() => {
+          requestAnimationFrame(updateRender);
+        }, RENDER_THROTTLE_MS - elapsed);
+      }
+    };
+
     await this.groqClient.streamChat({
       messages: chat.messages.slice(0, -1),
       model: modelToUse,
@@ -1765,29 +1814,9 @@ class GrauqueApp {
       onChunk: (chunkContent, fullText, chunkReasoning, fullReasoning) => {
         assistantMsg.content = fullText;
         assistantMsg.reasoning = fullReasoning;
-
-        if (fullReasoning && reasoningWrapEl) {
-          reasoningWrapEl.innerHTML = `
-            <details class="reasoning-details" open>
-              <summary>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:5px;">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="16" x2="12" y2="12"></line>
-                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                Reasoning Analysis
-              </summary>
-              <div class="reasoning-content">${this.escapeHtml(fullReasoning)}</div>
-            </details>
-          `;
-        }
-
-        if (fullText) {
-          bodyEl.innerHTML = this.mdRenderer.render(fullText) + '<span class="typing-cursor">▊</span>';
-        } else {
-          bodyEl.innerHTML = '<span class="typing-cursor">▊</span>';
-        }
-        this.scrollToBottom();
+        pendingText = fullText;
+        pendingReasoning = fullReasoning;
+        scheduleRender();
       },
       onMetrics: (metrics) => {
         if (speedBadgeEl) {
@@ -1798,6 +1827,7 @@ class GrauqueApp {
         }
       },
       onDone: (fullText, fullReasoning, finalMetrics) => {
+        renderPending = false;
         assistantMsg.content = fullText;
         assistantMsg.reasoning = fullReasoning;
         assistantMsg.metrics = finalMetrics;
