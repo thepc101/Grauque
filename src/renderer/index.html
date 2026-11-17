@@ -235,8 +235,10 @@
             </div>
             <div class="pdf-preview-actions">
               <button class="pdf-action-pill" id="btn-pdf-quick-summarize" title="Quickly summarize this PDF">Summarize</button>
+              <button class="pdf-action-pill" id="btn-pdf-quick-guide" title="Generate NotebookLM exam study guide">Study Guide</button>
               <button class="pdf-action-pill" id="btn-pdf-quick-flashcards" title="Make flashcard deck from this PDF">Flashcards</button>
-              <button class="pdf-action-pill" id="btn-pdf-quick-quiz" title="Make quiz from this PDF">Quiz</button>
+              <button class="pdf-action-pill" id="btn-pdf-quick-quiz" title="Make interactive quiz from this PDF">Quiz</button>
+              <button class="pdf-action-pill" id="btn-pdf-quick-audio" title="Generate NotebookLM spoken audio deep dive">Audio Overview</button>
               <button class="remove-pdf-btn" id="btn-remove-pdf" title="Remove PDF">&times;</button>
             </div>
           </div>
@@ -327,6 +329,15 @@
                   <span class="slash-desc">Math step-by-step proof with KaTeX LaTeX notation</span>
                 </div>
               </div>
+              <div class="slash-item" data-cmd="/audio" data-prompt="Generate a NotebookLM-style 2-minute Audio Overview Deep Dive summarizing the core ideas, key insights, and takeaways for: ">
+                <span class="slash-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                </span>
+                <div class="slash-text">
+                  <span class="slash-cmd">/audio</span>
+                  <span class="slash-desc">NotebookLM conversational audio overview & spoken deep dive</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -395,6 +406,21 @@
                       <div class="study-item-text">
                         <span class="study-item-name">Exam Study Guide & Cram Sheet</span>
                         <span class="study-item-desc">High-yield cheat sheets, key formulas & common test traps</span>
+                      </div>
+                    </button>
+
+                    <button class="study-popup-item" id="menu-item-audio-overview">
+                      <div class="study-item-icon icon-audio-overview" style="color:var(--accent);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                          <line x1="12" y1="19" x2="12" y2="23"></line>
+                          <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                      </div>
+                      <div class="study-item-text">
+                        <span class="study-item-name">NotebookLM Audio Overview</span>
+                        <span class="study-item-desc">Spoken deep dive breakdown with interactive audio player</span>
                       </div>
                     </button>
 

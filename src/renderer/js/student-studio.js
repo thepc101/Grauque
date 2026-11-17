@@ -8,17 +8,27 @@ class StudentStudio {
     this.timerMode = 'focus'; // focus, shortBreak, longBreak
     this.timerRunning = false;
     this.sessionsCompleted = 0;
+
+    // Audio Overview synthesis state
+    this.activeAudioUtterance = null;
+    this.audioOverviewPlaying = false;
+    this.audioPlaybackRate = 1.05;
   }
 
   // --- Flashcard Generator & Engine ---
-  getFlashcardPrompt(topic, count = 5, focus = 'High-Yield Concepts') {
+  getFlashcardPrompt(topic, count = 6, focus = 'High-Yield Concepts', attachedDocTitle = '') {
+    let groundingClause = '';
+    if (attachedDocTitle) {
+      groundingClause = `\nThe cards must be strictly grounded in and directly extract key concepts, terms, and principles from the attached document: "${attachedDocTitle}".`;
+    }
+
     return `Generate an interactive flashcard study deck about "${topic}".
 Focus: ${focus}.
-Number of cards: ${count}.
+Number of cards: ${count}.${groundingClause}
 
 Please format the response in two parts:
 1. First, provide a concise high-yield summary of key principles for "${topic}".
-2. Second, provide the flashcard deck structured in the following exact JSON code block so the interactive 3D flashcard runner can render it:
+2. Second, provide the flashcard deck structured inside the following exact JSON code block so the interactive 3D flashcard runner can render it:
 
 \`\`\`flashcard-json
 {
@@ -38,21 +48,24 @@ Please format the response in two parts:
 3. Finally, list 2 high-yield exam tips to remember when studying ${topic}.`;
   }
 
-  getStudyGuidePrompt(topic, notes = '') {
-    let p = `Generate a comprehensive Exam Study Guide and High-Yield Cram Sheet for: "${topic}".\n`;
+  getStudyGuidePrompt(topic, notes = '', attachedDocTitle = '') {
+    let p = `Generate a comprehensive NotebookLM-style Exam Study Guide and High-Yield Cram Sheet for: "${topic}".\n`;
+    if (attachedDocTitle) {
+      p += `\nGround this guide directly on the attached source document: "${attachedDocTitle}".\n`;
+    }
     if (notes && notes.trim()) {
-      p += `\nHere are my lecture notes and reference material to synthesize:\n"""\n${notes.trim()}\n"""\n`;
+      p += `\nReference lecture notes & materials:\n"""\n${notes.trim()}\n"""\n`;
     }
     p += `\nPlease structure the guide with:
-1. Core Definitions & Fundamental Concepts
-2. High-Yield Exam Topics (Frequently tested concepts)
-3. Essential Formulas, Rules & Principles Table
+1. Executive Briefing & Core Theory
+2. High-Yield Key Concepts Glossary
+3. Essential Equations, Laws, & Principles Reference Table
 4. Common Exam Traps & Tricky Distinctions to Avoid
-5. 3 Rapid-Fire Concept Check Questions`;
+5. Rapid-Fire Self-Check Practice Questions with Answers`;
     return p;
   }
 
-  getTutorPrompt(problem, approach = 'step-by-step') {
+  getTutorPrompt(problem, approach = 'step-by-step', attachedDocTitle = '') {
     let styleInstruction = 'Provide a step-by-step solution walkthrough explaining each step clearly.';
     if (approach === 'socratic-hint') {
       styleInstruction = 'Do NOT give away the final answer immediately. Provide Socratic guiding questions and 2 progressive hints to guide the student to the solution.';
@@ -60,7 +73,12 @@ Please format the response in two parts:
       styleInstruction = 'Explain the underlying concept using an intuitive real-world analogy first, then show how the mathematics/logic connects to it.';
     }
 
-    return `I need help solving this problem as my academic tutor:
+    let docGrounding = '';
+    if (attachedDocTitle) {
+      docGrounding = `\nContext: Grounded on problem set / chapter from "${attachedDocTitle}".\n`;
+    }
+
+    return `I need help solving this problem as my academic tutor:${docGrounding}
 """
 ${problem}
 """
@@ -75,20 +93,139 @@ Please include:
 5. One similar practice problem for me to try`;
   }
 
+  cleanAndParseJson(str) {
+    if (!str) return null;
+    const trimmed = str.trim();
+    try {
+      return JSON.parse(trimmed);
+    } catch (e1) {
+      try {
+        let cleaned = trimmed
+          .replace(/,\s*([\]}])/g, '$1')
+          .replace(/\/\/.*$/gm, '')
+          .replace(/\/\*[\s\S]*?\*\//g, '');
+        return JSON.parse(cleaned);
+      } catch (e2) {
+        return null;
+      }
+    }
+  }
+
+  // Resilient Flashcard Extraction (JSON code blocks or markdown fallback)
   extractFlashcardData(text) {
     if (!text) return null;
-    const match = text.match(/```(?:flashcard-json|json)\s*([\s\S]*?)\s*```/);
-    if (!match) return null;
 
-    try {
-      const data = JSON.parse(match[1]);
-      if (data && Array.isArray(data.cards) && data.cards.length > 0) {
-        return data;
+    // 1. Try finding JSON code blocks
+    const codeBlockRegex = /```(?:flashcard-json|json)?\s*([\s\S]*?)\s*```/gi;
+    let match;
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+      const candidate = match[1].trim();
+      if (candidate.startsWith('{') && (candidate.includes('"cards"') || candidate.includes('cards'))) {
+        const parsed = this.cleanAndParseJson(candidate);
+        if (parsed && Array.isArray(parsed.cards) && parsed.cards.length > 0) {
+          return this.normalizeFlashcardData(parsed);
+        }
       }
-    } catch (e) {
-      // not valid flashcard json
     }
+
+    // Check raw un-fenced JSON
+    const rawJsonMatch = text.match(/(\{\s*"title"[\s\S]*?"cards"\s*:\s*\[[\s\S]*?\]\s*\})/i);
+    if (rawJsonMatch) {
+      const parsed = this.cleanAndParseJson(rawJsonMatch[1]);
+      if (parsed && Array.isArray(parsed.cards) && parsed.cards.length > 0) {
+        return this.normalizeFlashcardData(parsed);
+      }
+    }
+
+    // 2. Fallback: Parse markdown flashcards
+    const markdownCards = this.parseMarkdownFlashcards(text);
+    if (markdownCards && markdownCards.cards.length >= 2) {
+      return this.normalizeFlashcardData(markdownCards);
+    }
+
     return null;
+  }
+
+  parseMarkdownFlashcards(text) {
+    if (!text) return null;
+    const cards = [];
+
+    // Pattern 1: Front: ... Back: ... or Q: ... A: ...
+    const p1 = /(?:^|\n)\s*(?:\d+[\.\)]\s*)?(?:Front|Q|Question)\s*[:\-]\s*([^\n]+)\s*\n\s*(?:Back|A|Answer|Definition)\s*[:\-]\s*([^\n]+)/gi;
+    let m1;
+    while ((m1 = p1.exec(text)) !== null) {
+      cards.push({
+        id: cards.length + 1,
+        front: m1[1].replace(/[*_~`#]/g, '').trim(),
+        back: m1[2].replace(/[*_~`#]/g, '').trim(),
+        category: 'Core Recall'
+      });
+    }
+
+    if (cards.length >= 2) {
+      return {
+        title: 'Study Flashcards',
+        subject: 'General Study',
+        cards: cards
+      };
+    }
+
+    // Pattern 2: Term: ... Definition: ...
+    const p2 = /(?:^|\n)\s*(?:\d+[\.\)]\s*)?(?:Term|Concept)\s*[:\-]\s*([^\n]+)\s*\n\s*(?:Definition|Meaning|Explanation)\s*[:\-]\s*([^\n]+)/gi;
+    let m2;
+    while ((m2 = p2.exec(text)) !== null) {
+      cards.push({
+        id: cards.length + 1,
+        front: m2[1].replace(/[*_~`#]/g, '').trim(),
+        back: m2[2].replace(/[*_~`#]/g, '').trim(),
+        category: 'Definitions'
+      });
+    }
+
+    if (cards.length >= 2) {
+      return {
+        title: 'Study Flashcards',
+        subject: 'Definitions',
+        cards: cards
+      };
+    }
+
+    // Pattern 3: Numbered bold terms: 1. **Term**: Definition or - **Term**: Definition
+    const p3 = /(?:^|\n)\s*(?:\d+[\.\)]|\-|\*)\s*\*\*([^\*]+)\*\*\s*[:\-–]\s*([^\n]+)/g;
+    let m3;
+    while ((m3 = p3.exec(text)) !== null) {
+      cards.push({
+        id: cards.length + 1,
+        front: m3[1].trim(),
+        back: m3[2].trim(),
+        category: 'High-Yield Concept'
+      });
+    }
+
+    if (cards.length >= 2) {
+      return {
+        title: 'High-Yield Study Cards',
+        subject: 'Core Concepts',
+        cards: cards
+      };
+    }
+
+    return null;
+  }
+
+  normalizeFlashcardData(data) {
+    const cards = (data.cards || []).map((c, idx) => ({
+      id: c.id || (idx + 1),
+      front: String(c.front || c.question || c.term || `Card ${idx + 1}`).trim(),
+      back: String(c.back || c.answer || c.definition || 'No definition provided.').trim(),
+      category: String(c.category || data.subject || 'High-Yield').trim()
+    }));
+
+    return {
+      title: data.title || 'Flashcard Deck',
+      subject: data.subject || 'General Study',
+      cards: cards
+    };
   }
 
   createFlashcardWidget(deckData, widgetId) {
@@ -118,14 +255,24 @@ Please include:
               <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
               <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
             </svg>
-            Flashcard Deck
+            Interactive Flashcard Deck
           </span>
           <span class="deck-title-text">${this.escape(deckData.title || 'Flashcards')}</span>
         </div>
         <div class="deck-header-actions">
           <span class="deck-counter" id="${deckId}-counter">Card 1 / ${cards.length}</span>
+          <button class="deck-tool-btn" id="${deckId}-btn-shuffle" title="Shuffle deck cards">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 3 21 3 21 8"></polyline>
+              <line x1="4" y1="20" x2="21" y2="3"></line>
+              <polyline points="21 16 21 21 16 21"></polyline>
+              <line x1="15" y1="15" x2="21" y2="21"></line>
+              <line x1="4" y1="4" x2="9" y2="9"></line>
+            </svg>
+            <span>Shuffle</span>
+          </button>
           <button class="deck-tool-btn" id="${deckId}-btn-anki" title="Export Deck to Anki format (.txt)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -140,21 +287,21 @@ Please include:
       </div>
 
       <!-- 3D Card Scene -->
-      <div class="card-scene" id="${deckId}-scene">
+      <div class="card-scene" id="${deckId}-scene" tabindex="0" title="Click or press Space to flip">
         <div class="card-flipper" id="${deckId}-flipper">
           <!-- Front -->
           <div class="card-face card-front">
             <div class="card-face-header">
               <span class="card-category-tag" id="${deckId}-cat-front">${this.escape(cards[0].category || 'Prompt')}</span>
-              <span class="card-flip-hint">Click card to reveal answer</span>
+              <span class="card-flip-hint">Click or Space to flip</span>
             </div>
             <div class="card-body-text" id="${deckId}-text-front">${this.escape(cards[0].front)}</div>
           </div>
           <!-- Back -->
           <div class="card-face card-back">
             <div class="card-face-header">
-              <span class="card-category-tag" id="${deckId}-cat-back">Explanation & Answer</span>
-              <span class="card-flip-hint">Click card to flip back</span>
+              <span class="card-category-tag" id="${deckId}-cat-back">High-Yield Answer</span>
+              <span class="card-flip-hint">Click or Space to flip back</span>
             </div>
             <div class="card-body-text" id="${deckId}-text-back">${this.escape(cards[0].back)}</div>
           </div>
@@ -174,7 +321,7 @@ Please include:
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
             </svg>
-            <span>Flip Card (Space)</span>
+            <span>Flip (Space)</span>
           </button>
           <button class="deck-ctrl-btn" id="${deckId}-btn-next" title="Next card (→)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -185,7 +332,7 @@ Please include:
         </div>
 
         <div class="deck-rating-buttons">
-          <button class="rate-btn rate-again" id="${deckId}-rate-again" title="Mark for review">
+          <button class="rate-btn rate-again" id="${deckId}-rate-again" title="Mark for review (Again)">
             <span>Again</span>
           </button>
           <button class="rate-btn rate-hard" id="${deckId}-rate-hard" title="Hard to recall">
@@ -199,6 +346,11 @@ Please include:
           </button>
         </div>
       </div>
+
+      <div class="deck-mastery-stats" id="${deckId}-stats">
+        <span>Mastered: <b id="${deckId}-stat-mastered" style="color:#10b981;">0</b></span>
+        <span>Needs Review: <b id="${deckId}-stat-review" style="color:#f59e0b;">0</b></span>
+      </div>
     `;
 
     setTimeout(() => {
@@ -208,290 +360,127 @@ Please include:
     return wrap;
   }
 
-  getStudyGuideSystemPrompt() {
-    return `You are Grauque Study Guide Studio, an expert academic tutor. Create a comprehensive, beautifully structured Exam Study Guide and High-Yield Cram Sheet.
-Use crisp GitHub-flavored Markdown formatted with:
-# [Subject / Topic Title] — Exam Master Guide
-
-## 1. High-Yield Summary & Core Theory
-A concise conceptual breakdown of the fundamental principles.
-
-## 2. Essential Vocabulary & Definitions
-A table or bullet list of bulletproof definitions and distinctions.
-
-## 3. Key Formulas, Laws, & Theorems
-Step-by-step formulas with variable definitions and units.
-
-## 4. Common Exam Traps & Tricky Distinctions
-Pitfalls professors love to test and how to avoid getting tripped up.
-
-## 5. Quick Check Self-Test
-3 rapid-fire concept questions to test active recall.
-
-Be direct, insightful, and prioritize high-retention learning.`;
-  }
-
-  getTutorSystemPrompt() {
-    return `You are Grauque Socratic Tutor, a world-class university tutor in STEM and Humanities. When helping a student solve a problem:
-1. Clarify the problem statement and identify the given variables / known facts.
-2. State the governing formulas, principles, or theorems needed.
-3. Provide a clear, step-by-step walkthrough of the solution with clear explanations for *why* each step is taken.
-4. Highlight the key takeaway or general problem-solving pattern.
-5. Provide one identical-structure "Test Yourself" practice problem for the student to try.
-Format with clean KaTeX-ready math and bold step markers.`;
-  }
-
-  // Render an interactive 3D Flashcard Deck Widget inside a chat message
-  renderFlashcardDeck(deckData, containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    const deckId = 'deck_' + Math.random().toString(36).substring(2, 9);
-    const cards = deckData.cards || [];
-    if (!cards.length) return;
-
-    this.activeDecks.set(deckId, {
-      title: deckData.title || 'Study Deck',
-      subject: deckData.subject || 'General Study',
-      cards: cards,
-      currentIndex: 0,
-      flipped: false,
-      mastered: new Set(),
-      needsReview: new Set()
-    });
-
-    container.innerHTML = `
-      <div class="flashcard-deck-widget" id="${deckId}">
-        <div class="deck-header">
-          <div class="deck-title-row">
-            <span class="deck-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-              </svg>
-              Flashcard Deck
-            </span>
-            <span class="deck-title-text">${this.escape(deckData.title || 'Flashcards')}</span>
-          </div>
-          <div class="deck-header-actions">
-            <span class="deck-counter" id="${deckId}-counter">Card 1 / ${cards.length}</span>
-            <button class="deck-tool-btn" id="${deckId}-btn-anki" title="Export Deck to Anki format (.txt)">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-              </svg>
-              <span>Export Anki</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="deck-progress-bar">
-          <div class="deck-progress-fill" id="${deckId}-progress" style="width: ${(1 / cards.length) * 100}%;"></div>
-        </div>
-
-        <!-- 3D Card Scene -->
-        <div class="card-scene" id="${deckId}-scene">
-          <div class="card-flipper" id="${deckId}-flipper">
-            <!-- Front -->
-            <div class="card-face card-front">
-              <div class="card-face-header">
-                <span class="card-category-tag" id="${deckId}-cat-front">${this.escape(cards[0].category || 'Prompt')}</span>
-                <span class="card-flip-hint">Click card to reveal answer</span>
-              </div>
-              <div class="card-body-text" id="${deckId}-text-front">${this.escape(cards[0].front)}</div>
-            </div>
-            <!-- Back -->
-            <div class="card-face card-back">
-              <div class="card-face-header">
-                <span class="card-category-tag" id="${deckId}-cat-back">Explanation & Answer</span>
-                <span class="card-flip-hint">Click card to flip back</span>
-              </div>
-              <div class="card-body-text" id="${deckId}-text-back">${this.escape(cards[0].back)}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Rating & Navigation Controls -->
-        <div class="deck-controls">
-          <div class="deck-nav-buttons">
-            <button class="deck-ctrl-btn" id="${deckId}-btn-prev" title="Previous card (←)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="19" y1="12" x2="5" y2="12"></line>
-                <polyline points="12 19 5 12 12 5"></polyline>
-              </svg>
-            </button>
-            <button class="deck-flip-trigger-btn" id="${deckId}-btn-flip">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-              </svg>
-              <span>Flip Card (Space)</span>
-            </button>
-            <button class="deck-ctrl-btn" id="${deckId}-btn-next" title="Next card (→)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-                <polyline points="12 5 19 12 12 19"></polyline>
-              </svg>
-            </button>
-          </div>
-
-          <div class="deck-rating-buttons">
-            <button class="rate-btn rate-again" id="${deckId}-rate-again" title="Mark for review">
-              <span>Again</span>
-            </button>
-            <button class="rate-btn rate-hard" id="${deckId}-rate-hard" title="Hard to recall">
-              <span>Hard</span>
-            </button>
-            <button class="rate-btn rate-good" id="${deckId}-rate-good" title="Good recall">
-              <span>Good</span>
-            </button>
-            <button class="rate-btn rate-easy" id="${deckId}-rate-easy" title="Mastered effortlessly">
-              <span>Easy</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    this.bindDeckEvents(deckId);
-  }
-
   bindDeckEvents(deckId) {
-    const deck = this.activeDecks.get(deckId);
-    if (!deck) return;
+    const state = this.activeDecks.get(deckId);
+    if (!state) return;
 
-    const sceneEl = document.getElementById(`${deckId}-scene`);
-    const flipperEl = document.getElementById(`${deckId}-flipper`);
+    const scene = document.getElementById(`${deckId}-scene`);
+    const flipper = document.getElementById(`${deckId}-flipper`);
     const btnFlip = document.getElementById(`${deckId}-btn-flip`);
     const btnPrev = document.getElementById(`${deckId}-btn-prev`);
     const btnNext = document.getElementById(`${deckId}-btn-next`);
+    const btnShuffle = document.getElementById(`${deckId}-btn-shuffle`);
     const btnAnki = document.getElementById(`${deckId}-btn-anki`);
 
-    const flipAction = () => {
-      deck.flipped = !deck.flipped;
-      flipperEl.classList.toggle('is-flipped', deck.flipped);
+    const rateAgain = document.getElementById(`${deckId}-rate-again`);
+    const rateHard = document.getElementById(`${deckId}-rate-hard`);
+    const rateGood = document.getElementById(`${deckId}-rate-good`);
+    const rateEasy = document.getElementById(`${deckId}-rate-easy`);
+
+    const flipCard = () => {
+      state.flipped = !state.flipped;
+      if (flipper) {
+        flipper.style.transform = state.flipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+      }
     };
 
-    sceneEl?.addEventListener('click', flipAction);
-    btnFlip?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      flipAction();
+    scene?.addEventListener('click', flipCard);
+    btnFlip?.addEventListener('click', flipCard);
+
+    // Keyboard navigation when scene is focused
+    scene?.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        flipCard();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevCard();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        nextCard();
+      }
     });
 
     const updateCardView = () => {
-      const card = deck.cards[deck.currentIndex];
-      deck.flipped = false;
-      flipperEl.classList.remove('is-flipped');
+      state.flipped = false;
+      if (flipper) flipper.style.transform = 'rotateY(0deg)';
 
-      document.getElementById(`${deckId}-counter`).textContent = `Card ${deck.currentIndex + 1} / ${deck.cards.length}`;
-      document.getElementById(`${deckId}-progress`).style.width = `${((deck.currentIndex + 1) / deck.cards.length) * 100}%`;
-      document.getElementById(`${deckId}-cat-front`).textContent = card.category || 'Concept';
-      document.getElementById(`${deckId}-text-front`).textContent = card.front;
-      document.getElementById(`${deckId}-text-back`).textContent = card.back;
+      const card = state.cards[state.currentIndex];
+      const textFront = document.getElementById(`${deckId}-text-front`);
+      const textBack = document.getElementById(`${deckId}-text-back`);
+      const catFront = document.getElementById(`${deckId}-cat-front`);
+      const counter = document.getElementById(`${deckId}-counter`);
+      const progress = document.getElementById(`${deckId}-progress`);
+
+      if (textFront) textFront.textContent = card.front;
+      if (textBack) textBack.textContent = card.back;
+      if (catFront) catFront.textContent = card.category || 'High-Yield';
+      if (counter) counter.textContent = `Card ${state.currentIndex + 1} / ${state.cards.length}`;
+      if (progress) progress.style.width = `${((state.currentIndex + 1) / state.cards.length) * 100}%`;
+
+      const statMastered = document.getElementById(`${deckId}-stat-mastered`);
+      const statReview = document.getElementById(`${deckId}-stat-review`);
+      if (statMastered) statMastered.textContent = state.mastered.size;
+      if (statReview) statReview.textContent = state.needsReview.size;
     };
 
-    btnPrev?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (deck.currentIndex > 0) {
-        deck.currentIndex--;
-        updateCardView();
+    const nextCard = () => {
+      if (state.currentIndex < state.cards.length - 1) {
+        state.currentIndex++;
+      } else {
+        state.currentIndex = 0; // loop
       }
-    });
+      updateCardView();
+    };
 
-    btnNext?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (deck.currentIndex < deck.cards.length - 1) {
-        deck.currentIndex++;
-        updateCardView();
+    const prevCard = () => {
+      if (state.currentIndex > 0) {
+        state.currentIndex--;
+      } else {
+        state.currentIndex = state.cards.length - 1;
       }
+      updateCardView();
+    };
+
+    btnNext?.addEventListener('click', nextCard);
+    btnPrev?.addEventListener('click', prevCard);
+
+    btnShuffle?.addEventListener('click', () => {
+      for (let i = state.cards.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [state.cards[i], state.cards[j]] = [state.cards[j], state.cards[i]];
+      }
+      state.currentIndex = 0;
+      updateCardView();
     });
 
-    // Rating handlers
-    ['again', 'hard', 'good', 'easy'].forEach(rating => {
-      document.getElementById(`${deckId}-rate-${rating}`)?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const cardId = deck.cards[deck.currentIndex].id || deck.currentIndex;
-        if (rating === 'again' || rating === 'hard') {
-          deck.needsReview.add(cardId);
-          deck.mastered.delete(cardId);
-        } else {
-          deck.mastered.add(cardId);
-          deck.needsReview.delete(cardId);
-        }
+    const rateCurrentCard = (type) => {
+      const cardId = state.cards[state.currentIndex].id;
+      if (type === 'easy' || type === 'good') {
+        state.mastered.add(cardId);
+        state.needsReview.delete(cardId);
+      } else {
+        state.needsReview.add(cardId);
+        state.mastered.delete(cardId);
+      }
+      nextCard();
+    };
 
-        // Auto advance to next card if not at end
-        if (deck.currentIndex < deck.cards.length - 1) {
-          deck.currentIndex++;
-          updateCardView();
-        } else {
-          this.showDeckSummary(deckId);
-        }
-      });
-    });
+    rateAgain?.addEventListener('click', () => rateCurrentCard('again'));
+    rateHard?.addEventListener('click', () => rateCurrentCard('hard'));
+    rateGood?.addEventListener('click', () => rateCurrentCard('good'));
+    rateEasy?.addEventListener('click', () => rateCurrentCard('easy'));
 
-    btnAnki?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.exportDeckToAnki(deck);
+    btnAnki?.addEventListener('click', () => {
+      this.exportDeckToAnki(deckId);
     });
   }
 
-  showDeckSummary(deckId) {
+  exportDeckToAnki(deckId) {
     const deck = this.activeDecks.get(deckId);
     if (!deck) return;
-    const widget = document.getElementById(deckId);
-    if (!widget) return;
 
-    widget.innerHTML = `
-      <div class="deck-summary-view">
-        <div class="summary-icon">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent);">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
-        </div>
-        <h3 class="summary-heading">Deck Review Completed!</h3>
-        <p class="summary-desc">You practiced all ${deck.cards.length} flashcards in <strong>${this.escape(deck.title)}</strong>.</p>
-        
-        <div class="summary-stats-row">
-          <div class="stat-box stat-mastered">
-            <span class="stat-number">${deck.mastered.size}</span>
-            <span class="stat-label">Mastered</span>
-          </div>
-          <div class="stat-box stat-review">
-            <span class="stat-number">${deck.needsReview.size}</span>
-            <span class="stat-label">Need Review</span>
-          </div>
-          <div class="stat-box stat-total">
-            <span class="stat-number">${deck.cards.length}</span>
-            <span class="stat-label">Total Cards</span>
-          </div>
-        </div>
-
-        <div class="summary-actions">
-          <button class="btn-primary" id="${deckId}-btn-restart">Study Deck Again</button>
-          <button class="btn-secondary" id="${deckId}-btn-anki-export">Export to Anki (.txt)</button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById(`${deckId}-btn-restart`)?.addEventListener('click', () => {
-      deck.currentIndex = 0;
-      deck.mastered.clear();
-      deck.needsReview.clear();
-      this.renderFlashcardDeck({
-        title: deck.title,
-        subject: deck.subject,
-        cards: deck.cards
-      }, deckId + '-parent');
-    });
-
-    document.getElementById(`${deckId}-btn-anki-export`)?.addEventListener('click', () => {
-      this.exportDeckToAnki(deck);
-    });
-  }
-
-  exportDeckToAnki(deck) {
-    let tsv = `#separator:tab\n#html:false\n#tags:${deck.subject || 'Grauque'}\n`;
+    let tsv = `#separator:tab\n#html:true\n#tags column:3\n`;
     deck.cards.forEach(card => {
       const front = card.front.replace(/\t/g, ' ').replace(/\n/g, '<br>');
       const back = card.back.replace(/\t/g, ' ').replace(/\n/g, '<br>');
@@ -507,6 +496,175 @@ Format with clean KaTeX-ready math and bold step markers.`;
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  // --- NotebookLM Audio Overview Deep Dive Widget ---
+  createAudioOverviewWidget(title, summaryScript, widgetId) {
+    const audioId = widgetId || ('audio_' + Math.random().toString(36).substring(2, 9));
+    const container = document.createElement('div');
+    container.className = 'notebooklm-audio-widget';
+    container.id = audioId;
+
+    container.innerHTML = `
+      <div class="audio-overview-card">
+        <div class="audio-card-header">
+          <div class="audio-icon-pulse">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </div>
+          <div class="audio-title-meta">
+            <span class="audio-badge">NotebookLM Audio Overview</span>
+            <h4 class="audio-main-title">${this.escape(title || 'Study Deep Dive Briefing')}</h4>
+          </div>
+        </div>
+
+        <div class="audio-waveform-container" id="${audioId}-waveform">
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+          <span class="wave-bar"></span>
+        </div>
+
+        <div class="audio-player-controls">
+          <button class="audio-play-btn" id="${audioId}-play" title="Play / Pause Audio Deep Dive">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" id="${audioId}-play-icon">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span id="${audioId}-play-label">Play Deep Dive</span>
+          </button>
+
+          <button class="audio-stop-btn" id="${audioId}-stop" title="Stop Audio">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+            </svg>
+          </button>
+
+          <div class="audio-rate-picker">
+            <button class="audio-speed-btn active" data-speed="1.0" id="${audioId}-speed-1">1.0x</button>
+            <button class="audio-speed-btn" data-speed="1.25" id="${audioId}-speed-125">1.25x</button>
+            <button class="audio-speed-btn" data-speed="1.5" id="${audioId}-speed-15">1.5x</button>
+          </div>
+        </div>
+
+        <details class="audio-transcript-details">
+          <summary>Show Audio Overview Transcript</summary>
+          <div class="audio-transcript-text">${this.escape(summaryScript)}</div>
+        </details>
+      </div>
+    `;
+
+    setTimeout(() => {
+      this.bindAudioWidgetEvents(audioId, summaryScript);
+    }, 10);
+
+    return container;
+  }
+
+  bindAudioWidgetEvents(audioId, scriptText) {
+    const playBtn = document.getElementById(`${audioId}-play`);
+    const stopBtn = document.getElementById(`${audioId}-stop`);
+    const playIcon = document.getElementById(`${audioId}-play-icon`);
+    const playLabel = document.getElementById(`${audioId}-play-label`);
+    const waveform = document.getElementById(`${audioId}-waveform`);
+    const speedButtons = document.querySelectorAll(`#${audioId} .audio-speed-btn`);
+
+    let currentRate = 1.05;
+
+    speedButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        speedButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRate = parseFloat(btn.getAttribute('data-speed')) || 1.0;
+        if (window.speechSynthesis && window.speechSynthesis.speaking) {
+          // Restart with new rate
+          window.speechSynthesis.cancel();
+          startSpeaking();
+        }
+      });
+    });
+
+    const cleanScript = scriptText
+      .replace(/```[\s\S]*?```/g, '')
+      .replace(/\$\$[\s\S]*?\$\$/g, '')
+      .replace(/[*_~`#>-]/g, ' ')
+      .trim();
+
+    const startSpeaking = () => {
+      if (!window.speechSynthesis) {
+        alert('Speech synthesis is not supported on this device.');
+        return;
+      }
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(cleanScript);
+      utterance.rate = currentRate;
+
+      const voices = window.speechSynthesis.getVoices();
+      const naturalVoice = voices.find(v => v.lang.startsWith('en') && (v.name.includes('Daniel') || v.name.includes('Samantha') || v.name.includes('Alex')));
+      if (naturalVoice) utterance.voice = naturalVoice;
+
+      utterance.onstart = () => {
+        this.audioOverviewPlaying = true;
+        waveform?.classList.add('active');
+        if (playIcon) playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect>';
+        if (playLabel) playLabel.textContent = 'Pause';
+      };
+
+      utterance.onend = () => {
+        this.audioOverviewPlaying = false;
+        waveform?.classList.remove('active');
+        if (playIcon) playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        if (playLabel) playLabel.textContent = 'Play Deep Dive';
+      };
+
+      utterance.onerror = () => {
+        this.audioOverviewPlaying = false;
+        waveform?.classList.remove('active');
+        if (playIcon) playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+        if (playLabel) playLabel.textContent = 'Play Deep Dive';
+      };
+
+      window.speechSynthesis.speak(utterance);
+    };
+
+    playBtn?.addEventListener('click', () => {
+      if (!window.speechSynthesis) return;
+
+      if (window.speechSynthesis.speaking) {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+          waveform?.classList.add('active');
+          if (playIcon) playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"></rect><rect x="14" y="4" width="4" height="16" rx="1"></rect>';
+          if (playLabel) playLabel.textContent = 'Pause';
+        } else {
+          window.speechSynthesis.pause();
+          waveform?.classList.remove('active');
+          if (playIcon) playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+          if (playLabel) playLabel.textContent = 'Resume';
+        }
+      } else {
+        startSpeaking();
+      }
+    });
+
+    stopBtn?.addEventListener('click', () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      waveform?.classList.remove('active');
+      if (playIcon) playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"></polygon>';
+      if (playLabel) playLabel.textContent = 'Play Deep Dive';
+    });
   }
 
   // --- Pomodoro Focus Timer ---
@@ -600,14 +758,13 @@ Format with clean KaTeX-ready math and bold step markers.`;
 
   handleTimerComplete() {
     this.pauseTimer();
-    // Play subtle audio tone using Web Audio API
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3); // A5
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
       gain.gain.setValueAtTime(0.25, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
       osc.connect(gain);
@@ -623,7 +780,7 @@ Format with clean KaTeX-ready math and bold step markers.`;
       const nextMode = (this.sessionsCompleted % 4 === 0) ? 'longBreak' : 'shortBreak';
       const breakMins = nextMode === 'longBreak' ? 15 : 5;
       
-      const proceed = confirm(`Focus session completed!\nGreat job staying in the zone. Time for a ${breakMins}-minute break. Switch to break timer?`);
+      const proceed = confirm(`Focus session completed!\nTime for a ${breakMins}-minute break. Switch to break timer?`);
       if (proceed) {
         this.resetTimer(nextMode);
         this.startTimer();

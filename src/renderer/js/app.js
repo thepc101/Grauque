@@ -72,6 +72,7 @@ class GrauqueApp {
     this.studyToolsPopup = document.getElementById('study-tools-popup');
     this.menuItemFlashcards = document.getElementById('menu-item-flashcards');
     this.menuItemStudyGuide = document.getElementById('menu-item-study-guide');
+    this.menuItemAudioOverview = document.getElementById('menu-item-audio-overview');
     this.menuItemQuiz = document.getElementById('menu-item-quiz');
     this.menuItemTutor = document.getElementById('menu-item-tutor');
     this.menuItemPomodoro = document.getElementById('menu-item-pomodoro');
@@ -84,8 +85,10 @@ class GrauqueApp {
     this.pdfMetaBadge = document.getElementById('pdf-meta-badge');
     this.btnRemovePdf = document.getElementById('btn-remove-pdf');
     this.btnPdfQuickSummarize = document.getElementById('btn-pdf-quick-summarize');
+    this.btnPdfQuickGuide = document.getElementById('btn-pdf-quick-guide');
     this.btnPdfQuickFlashcards = document.getElementById('btn-pdf-quick-flashcards');
     this.btnPdfQuickQuiz = document.getElementById('btn-pdf-quick-quiz');
+    this.btnPdfQuickAudio = document.getElementById('btn-pdf-quick-audio');
     this.currentAttachedPdf = null;
 
     // Voice Dictation Elements
@@ -254,19 +257,21 @@ class GrauqueApp {
   }
 
   getModelDisplayName(modelId, isSettings = false) {
-    if (modelId === 'openai/gpt-oss-120b') {
+    if (!modelId) return isSettings ? 'Grauque Max (Reasoning • Default)' : 'Grauque Max';
+    const id = String(modelId).toLowerCase();
+    if (id.includes('120b') || id.includes('max')) {
       return isSettings ? 'Grauque Max (Reasoning • Default)' : 'Grauque Max';
     }
-    if (modelId === 'qwen/qwen3.8-27b') {
+    if (id.includes('qwen') || id.includes('image')) {
       return isSettings ? 'Grauque Image (Vision Support)' : 'Grauque Image';
     }
-    if (modelId === 'openai/gpt-oss-20b') {
+    if (id.includes('20b') || id.includes('medium')) {
       return isSettings ? 'Grauque Medium (Fast)' : 'Grauque Medium';
     }
-    if (modelId === 'allam-2-7b') {
+    if (id.includes('allam') || id.includes('low')) {
       return 'Grauque Low';
     }
-    return modelId;
+    return isSettings ? 'Grauque Max (Reasoning • Default)' : 'Grauque Max';
   }
 
   ensureModelInDropdown(selectEl, modelId) {
@@ -419,6 +424,19 @@ class GrauqueApp {
       this.openStudyGuideModal();
     });
 
+    this.menuItemAudioOverview?.addEventListener('click', () => {
+      if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
+      if (this.currentAttachedPdf) {
+        this.chatInput.value = `Generate a NotebookLM-style conversational 2-minute Audio Overview Deep Dive breaking down the key concepts from "${this.currentAttachedPdf.title}".`;
+      } else {
+        const topic = prompt('Enter a topic or course for your NotebookLM Audio Deep Dive:', 'Quantum Computing');
+        if (topic) {
+          this.chatInput.value = `Generate a NotebookLM-style conversational 2-minute Audio Overview Deep Dive breaking down the key ideas for: ${topic}.`;
+        }
+      }
+      if (this.chatInput.value) this.handleSend();
+    });
+
     this.menuItemQuiz?.addEventListener('click', () => {
       if (this.studyToolsPopup) this.studyToolsPopup.style.display = 'none';
       this.openQuizStudio();
@@ -533,12 +551,28 @@ class GrauqueApp {
       this.handleSend();
     });
 
+    this.btnPdfQuickGuide?.addEventListener('click', () => {
+      if (!this.currentAttachedPdf) return;
+      this.chatInput.value = `Generate a comprehensive NotebookLM-style Exam Study Guide and High-Yield Cram Sheet directly grounded in this document (${this.currentAttachedPdf.title}). Include key concepts, essential formulas table, and common exam pitfalls.`;
+      this.handleSend();
+    });
+
     this.btnPdfQuickFlashcards?.addEventListener('click', () => {
-      this.openFlashcardModal();
+      if (!this.currentAttachedPdf) return;
+      this.chatInput.value = `Generate an interactive flashcard study deck of 6 high-yield cards directly grounded in this document (${this.currentAttachedPdf.title}).`;
+      this.handleSend();
     });
 
     this.btnPdfQuickQuiz?.addEventListener('click', () => {
-      this.openQuizStudio();
+      if (!this.currentAttachedPdf) return;
+      this.chatInput.value = `Generate a comprehensive 5-question interactive multiple-choice assessment directly testing the core concepts from this attached document (${this.currentAttachedPdf.title}).`;
+      this.handleSend();
+    });
+
+    this.btnPdfQuickAudio?.addEventListener('click', () => {
+      if (!this.currentAttachedPdf) return;
+      this.chatInput.value = `Generate a NotebookLM-style conversational 2-minute Audio Overview Deep Dive breaking down the key ideas from this document (${this.currentAttachedPdf.title}) like an expert podcast host.`;
+      this.handleSend();
     });
 
     // Paste Image or PDF from Clipboard
@@ -1331,6 +1365,13 @@ class GrauqueApp {
                 </svg>
                 <span>Read</span>
               </button>
+              <button class="msg-action-btn btn-quiz-turn" data-idx="${idx}" title="Test yourself with an interactive quiz on this response">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                <span>Quiz</span>
+              </button>
               <button class="msg-action-btn btn-retry-response" data-idx="${idx}" title="Regenerate this response">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="23 4 23 10 17 10"></polyline>
@@ -1369,6 +1410,14 @@ class GrauqueApp {
         const flashcardWidget = this.studentStudio.createFlashcardWidget(flashcardData, `flashcard-widget-${idx}`);
         if (flashcardWidget) bodyEl.appendChild(flashcardWidget);
       }
+
+      // Check for NotebookLM Audio Overview
+      const isAudioOverview = (msg.content || '').includes('Audio Overview') || (msg.content || '').includes('Deep Dive');
+      if (isAudioOverview) {
+        const bodyEl = row.querySelector(`#body-${idx}`);
+        const audioWidget = this.studentStudio.createAudioOverviewWidget('NotebookLM Audio Overview', msg.content, `audio-widget-${idx}`);
+        if (audioWidget && bodyEl) bodyEl.prepend(audioWidget);
+      }
     }
 
     this.messagesContainer.appendChild(row);
@@ -1396,6 +1445,12 @@ class GrauqueApp {
     const exportBtn = row.querySelector(`.btn-export-response[data-idx="${idx}"]`);
     exportBtn?.addEventListener('click', () => {
       this.exportSingleMessage(msg);
+    });
+
+    const quizBtn = row.querySelector(`.btn-quiz-turn[data-idx="${idx}"]`);
+    quizBtn?.addEventListener('click', () => {
+      this.chatInput.value = `Generate an interactive 5-question multiple choice assessment testing the core concepts explained in the response above.`;
+      this.handleSend();
     });
   }
 
@@ -1425,6 +1480,13 @@ class GrauqueApp {
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
           </svg>
           <span>Read</span>
+        </button>
+        <button class="msg-action-btn btn-quiz-turn" data-idx="${idx}" title="Test yourself with an interactive quiz on this response">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>Quiz</span>
         </button>
         <button class="msg-action-btn btn-retry-response" data-idx="${idx}" title="Regenerate this response">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1862,6 +1924,12 @@ class GrauqueApp {
           if (flashcardWidget) bodyEl.appendChild(flashcardWidget);
         }
 
+        const isAudioOverview = fullText.includes('Audio Overview') || fullText.includes('Deep Dive') || chat.messages[chat.messages.length - 2]?.content?.includes('/audio');
+        if (isAudioOverview && !quizData && !flashcardData) {
+          const audioWidget = this.studentStudio.createAudioOverviewWidget(chat.title || 'NotebookLM Audio Overview', fullText, `audio-widget-${assistantIndex}`);
+          if (audioWidget) bodyEl.prepend(audioWidget);
+        }
+
         if (speedBadgeEl) {
           speedBadgeEl.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px; margin-right:3px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>${finalMetrics.tokensPerSec} t/s • ${finalMetrics.elapsedSec}s`;
         }
@@ -1928,8 +1996,9 @@ class GrauqueApp {
 
     const count = parseInt(this.quizCount.value, 10) || 5;
     const difficulty = this.quizDifficulty.value || 'Intermediate';
+    const docTitle = this.currentAttachedPdf ? this.currentAttachedPdf.title : '';
 
-    const prompt = this.quizManager.getQuizPrompt(topic, count, difficulty);
+    const prompt = this.quizManager.getQuizPrompt(topic, count, difficulty, docTitle);
     this.closeQuizStudio();
 
     this.chatInput.value = prompt;
@@ -2064,13 +2133,11 @@ class GrauqueApp {
       return;
     }
 
-    const count = parseInt(this.flashcardCount?.value, 10) || 5;
+    const count = parseInt(this.flashcardCount?.value, 10) || 6;
     const focus = this.flashcardFocus?.value || 'High-Yield Concepts';
+    const docTitle = this.currentAttachedPdf ? this.currentAttachedPdf.title : '';
 
-    let prompt = this.studentStudio.getFlashcardPrompt(topic, count, focus);
-    if (this.currentAttachedPdf && this.currentAttachedPdf.text) {
-      prompt += `\n\nGenerate cards specifically covering the key points from the attached PDF ("${this.currentAttachedPdf.title}").`;
-    }
+    const prompt = this.studentStudio.getFlashcardPrompt(topic, count, focus, docTitle);
     this.closeFlashcardModal();
 
     this.chatInput.value = prompt;
@@ -2102,8 +2169,9 @@ class GrauqueApp {
       return;
     }
     const notes = this.studyGuideNotes?.value.trim() || '';
+    const docTitle = this.currentAttachedPdf ? this.currentAttachedPdf.title : '';
 
-    const prompt = this.studentStudio.getStudyGuidePrompt(topic, notes);
+    const prompt = this.studentStudio.getStudyGuidePrompt(topic, notes, docTitle);
     this.closeStudyGuideModal();
 
     this.chatInput.value = prompt;

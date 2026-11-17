@@ -2,11 +2,13 @@ const input = document.getElementById('prompt-input');
 const modelTag = document.getElementById('quick-model-tag');
 
 function getModelDisplayName(modelId) {
-  if (modelId === 'openai/gpt-oss-120b') return 'Grauque Max';
-  if (modelId === 'qwen/qwen3.8-27b') return 'Grauque Image';
-  if (modelId === 'openai/gpt-oss-20b') return 'Grauque Medium';
-  if (modelId === 'allam-2-7b') return 'Grauque Low';
-  return modelId || 'Grauque Max';
+  if (!modelId) return 'Grauque Max';
+  const id = String(modelId).toLowerCase();
+  if (id.includes('120b') || id.includes('max')) return 'Grauque Max';
+  if (id.includes('qwen') || id.includes('image')) return 'Grauque Image';
+  if (id.includes('20b') || id.includes('medium')) return 'Grauque Medium';
+  if (id.includes('allam') || id.includes('low')) return 'Grauque Low';
+  return 'Grauque Max';
 }
 
 async function refreshActiveModel() {
@@ -47,12 +49,20 @@ input.addEventListener('keydown', (e) => {
   }
 });
 
-// Auto focus and refresh model info whenever shown
+// Auto focus and refresh model info whenever shown or focused
 window.addEventListener('focus', () => {
   refreshActiveModel();
   input.focus();
   input.select();
 });
+
+if (window.grauqueApi?.onQuickPromptFocus) {
+  window.grauqueApi.onQuickPromptFocus(() => {
+    refreshActiveModel();
+    input.focus();
+    input.select();
+  });
+}
 
 // Initial model refresh
 refreshActiveModel();

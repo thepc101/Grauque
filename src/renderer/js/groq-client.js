@@ -64,8 +64,25 @@ class GroqClient {
       searchModifier = '\n\n[Deep Grounding & Research Mode Activated]\nAdopt a comprehensive, evidence-grounded research synthesis. Provide in-depth analysis, structured sections with bold headers, cross-checked factual claims, citation tags like [1] and [2], and conclude with a Critical Evaluation & Key Takeaways summary.';
     }
 
+    // NotebookLM Study Tool Instructions
+    const allPromptText = messages.map(m => (typeof m.content === 'string' ? m.content : '')).join(' ').toLowerCase();
+    const isQuizReq = allPromptText.includes('/quiz') || allPromptText.includes('quiz') || allPromptText.includes('knowledge check') || allPromptText.includes('practice test');
+    const isFlashcardReq = allPromptText.includes('/flashcard') || allPromptText.includes('flashcard') || allPromptText.includes('study deck');
+    const isAudioReq = allPromptText.includes('/audio') || allPromptText.includes('audio overview') || allPromptText.includes('deep dive');
+
+    let studyModifier = '';
+    if (isQuizReq) {
+      studyModifier += '\n\n[Interactive Assessment Engine Active]\nYou must provide a comprehensive, challenging educational assessment. Provide a brief introduction, followed by questions structured inside a ```quiz-json code block containing valid JSON with:\n{\n  "title": "Topic Assessment",\n  "difficulty": "Intermediate",\n  "questions": [\n    {\n      "question": "Question text here?",\n      "options": ["First option", "Second option", "Third option", "Fourth option"],\n      "answerIndex": 0,\n      "explanation": "Detailed explanation of why this answer is correct."\n    }\n  ]\n}\n';
+    }
+    if (isFlashcardReq) {
+      studyModifier += '\n\n[Interactive Flashcard Studio Active]\nFormat the study cards inside a ```flashcard-json code block containing valid JSON with:\n{\n  "title": "Topic Flashcards",\n  "subject": "Topic",\n  "cards": [\n    {\n      "id": 1,\n      "front": "Concept, term, or question prompt",\n      "back": "High-yield definition or core explanation",\n      "category": "High-Yield"\n    }\n  ]\n}\n';
+    }
+    if (isAudioReq) {
+      studyModifier += '\n\n[NotebookLM Audio Overview Active]\nProvide a conversational, engaging, spoken 2-minute "Deep Dive" briefing breaking down the main ideas like an expert podcast host. Start directly with an engaging overview, synthesize the core principles with intuitive analogies, and summarize the top takeaways.';
+    }
+
     let finalSystemPrompt = (settings.systemPrompt || 
-      'You are Grauque, an exceptionally capable, intelligent, and efficient AI assistant. Be direct, clear, and comprehensive. Provide thorough depth, insightful reasoning, and elegant formatting. For math and scientific equations, format using clean LaTeX ($ for inline, $$ for block formulas). Never output raw <br> tags.') + personaModifier + searchModifier;
+      'You are Grauque, an exceptionally capable, intelligent, and efficient AI assistant. Be direct, clear, and comprehensive. Provide thorough depth, insightful reasoning, and elegant formatting. For math and scientific equations, format using clean LaTeX ($ for inline, $$ for block formulas). Never output raw <br> tags.') + personaModifier + searchModifier + studyModifier;
 
     // Inject User Memories if enabled
     const memories = Array.isArray(settings.memories) ? settings.memories.filter(m => m && m.text && m.enabled !== false) : [];

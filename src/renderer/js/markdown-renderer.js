@@ -9,7 +9,7 @@ class MarkdownRenderer {
       typographer: true,
       highlight: (str, lang) => {
         // If it's structured JSON (quiz or flashcards), hide raw JSON code block
-        if (lang === 'quiz-json' || lang === 'flashcard-json') {
+        if (lang === 'quiz-json' || lang === 'flashcard-json' || (lang === 'json' && (str.includes('"questions"') || str.includes('"cards"')))) {
           return `<pre class="hidden-structured-data" style="display:none;"><code>${this.escapeHtml(str)}</code></pre>`;
         }
 

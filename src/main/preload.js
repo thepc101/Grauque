@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld('grauqueApi', {
   onPromptFromQuickBox: (callback) => {
     ipcRenderer.on('prompt:from-quick-box', (_event, data) => callback(data));
   },
+  onQuickPromptFocus: (callback) => {
+    ipcRenderer.on('quick-prompt:focus', (_event, data) => callback(data));
+  },
 
   // Settings IPC
   getSettings: () => ipcRenderer.invoke('settings:get'),

@@ -209,8 +209,9 @@ body {
 
 .new-chat-btn {
   position: relative;
-  background: #14141A;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(#111116, #111116) padding-box,
+              linear-gradient(135deg, rgba(168, 85, 247, 0.45) 0%, rgba(99, 102, 241, 0.28) 50%, rgba(10, 132, 255, 0.25) 100%) border-box;
+  border: 1.2px solid transparent;
   border-radius: 10px;
   padding: 9px 12px;
   display: flex;
@@ -226,9 +227,11 @@ body {
 }
 
 .new-chat-btn:hover {
-  background: #1C1C24;
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  background: linear-gradient(#16161D, #16161D) padding-box,
+              linear-gradient(135deg, rgba(168, 85, 247, 0.7) 0%, rgba(99, 102, 241, 0.45) 50%, rgba(10, 132, 255, 0.4) 100%) border-box;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4),
+              0 0 16px -2px rgba(168, 85, 247, 0.2);
   transform: translateY(-1px);
   color: #FFFFFF;
 }
@@ -702,10 +705,11 @@ body {
   justify-content: flex-start;
 }
 
-/* User Message: Sleek Solid Obsidian Bubble (No Gradient) */
+/* User Message: Sleek Solid Black Bubble Bordered with Gradient */
 .user-bubble {
-  background: #17171E;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(#101014, #101014) padding-box,
+              linear-gradient(135deg, rgba(168, 85, 247, 0.45) 0%, rgba(99, 102, 241, 0.3) 50%, rgba(10, 132, 255, 0.25) 100%) border-box;
+  border: 1.2px solid transparent;
   color: #F5F5F7;
   padding: 12px 17px;
   border-radius: 18px 18px 4px 18px;
@@ -718,7 +722,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.35),
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45),
+              0 0 20px -6px rgba(168, 85, 247, 0.12),
               inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
@@ -2871,4 +2876,316 @@ input:checked + .toggle-slider:before {
   color: var(--accent-text);
   border: 1px solid rgba(168, 85, 247, 0.35);
   box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
+}
+
+/* ==========================================================================
+   NotebookLM Study Suite: Advanced Quiz, Flashcards & Audio Overview
+   ========================================================================== */
+
+/* Quiz Enhancements */
+.quiz-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.quiz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38BDF8, #A855F7);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.quiz-q-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.q-number-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.q-text-content {
+  flex: 1;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-weight: 550;
+}
+
+.opt-result-icon {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.quiz-summary-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.quiz-grade-badge {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  padding: 4px 14px;
+  border-radius: 8px;
+  margin-right: 12px;
+}
+
+.quiz-grade-badge.grade-a {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34D399;
+}
+
+.quiz-grade-badge.grade-b {
+  background: rgba(14, 165, 233, 0.16);
+  border: 1px solid rgba(14, 165, 233, 0.4);
+  color: #38BDF8;
+}
+
+.quiz-grade-badge.grade-c {
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #FBBF24;
+}
+
+.quiz-grade-badge.grade-needs-review {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #F87171;
+}
+
+.quiz-score-num {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Flashcard Enhancements */
+.deck-mastery-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 12px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* NotebookLM Audio Overview Deep Dive Player */
+.notebooklm-audio-widget {
+  margin: 14px 0;
+}
+
+.audio-overview-card {
+  background: linear-gradient(135deg, rgba(20, 20, 26, 0.94) 0%, rgba(15, 15, 20, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.audio-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.audio-icon-pulse {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.audio-title-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.audio-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--accent);
+}
+
+.audio-main-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.audio-waveform-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+}
+
+.wave-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 3px;
+  transition: height 0.2s ease, background 0.2s ease;
+}
+
+.audio-waveform-container.active .wave-bar {
+  background: var(--accent);
+  animation: waveBounce 0.8s ease-in-out infinite alternate;
+}
+
+.audio-waveform-container.active .wave-bar:nth-child(1) { animation-delay: 0.0s; }
+.audio-waveform-container.active .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+.audio-waveform-container.active .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+.audio-waveform-container.active .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+.audio-waveform-container.active .wave-bar:nth-child(5) { animation-delay: 0.1s; }
+.audio-waveform-container.active .wave-bar:nth-child(6) { animation-delay: 0.25s; }
+.audio-waveform-container.active .wave-bar:nth-child(7) { animation-delay: 0.4s; }
+.audio-waveform-container.active .wave-bar:nth-child(8) { animation-delay: 0.2s; }
+.audio-waveform-container.active .wave-bar:nth-child(9) { animation-delay: 0.35s; }
+.audio-waveform-container.active .wave-bar:nth-child(10) { animation-delay: 0.05s; }
+
+@keyframes waveBounce {
+  0% { height: 6px; }
+  100% { height: 24px; }
+}
+
+.audio-player-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.audio-play-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 16px;
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.audio-play-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.audio-stop-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.audio-stop-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.audio-rate-picker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 2px 4px;
+}
+
+.audio-speed-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.audio-speed-btn:hover {
+  color: #FFFFFF;
+}
+
+.audio-speed-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.audio-transcript-details {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.audio-transcript-details summary {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 550;
+  outline: none;
+}
+
+.audio-transcript-text {
+  margin-top: 8px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
 }
