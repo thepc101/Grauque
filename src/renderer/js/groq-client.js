@@ -30,23 +30,28 @@ class GroqClient {
       return;
     }
 
-    // Auto-detect if conversation contains images and ensure vision model is used
+    // Auto-detect if recent conversation contains images and ensure vision model is used
     const recentMessages = messages.slice(-8).map(message => ({ ...message }));
     const hasAnyImage = recentMessages.some(m => Boolean(m.imageUrl));
     let model = modelOverride || settings.model || 'openai/gpt-oss-120b';
     if (hasAnyImage && !this.isVisionModel(model)) {
       model = 'qwen/qwen3.8-27b';
     }
-    const temperature = parseFloat(settings.temperature) ?? 0.7;
-    const isVision = this.isVisionModel(model);
-
-    // Dynamic token cap: safe limit for Qwen vision OTPM, full 4k-8k capacity for text models
-    let maxTokens = parseInt(settings.maxTokens, 10) || 4096;
-    if (isVision) {
-      maxTokens = Math.min(maxTokens, 600); // safe cap for Qwen 1000 OTPM limit
-    } else {
-      maxTokens = Math.min(Math.max(maxTokens, 1024), 8192); // full depth for reasoning and code
-    }
+    const configuredTemperature = Number.parseFloat(settings.temperature);
+    const configuredMaxTokens = Number.parseInt(settings.maxTokens, 10) || 4096;
+    const latestUserMessage = [...recentMessages].reverse().find(message => message.role === 'user');
+    const latestUserText = typeof latestUserMessage?.content === 'string' ? latestUserMessage.content : '';
+    const isQuizReq = /\/quiz\b|\bquiz\b|\bknowledge check\b|\bpractice test\b|\bmultiple[- ]choice assessment\b/i.test(latestUserText);
+    const questionCountMatch = latestUserText.match(/\b(\d{1,2})\s*[- ]?questions?\b/i) ||
+      latestUserText.match(/\b(?:create|generate|make|exactly)\s+(?:exactly\s+)?(\d{1,2})\b[^.!?\n]{0,40}\bquestions?\b/i);
+    const requestedQuestionCount = Math.max(3, Math.min(12, Number.parseInt(questionCountMatch?.[1], 10) || 5));
+    const quizTokenBudget = 900 + requestedQuestionCount * 520;
+    // Output-token throughput limits are not per-response limits. Keep enough room
+    // for complete quizzes, including when an image selects a vision model.
+    const maxTokens = Math.min(8192, Math.max(configuredMaxTokens, 1024, isQuizReq ? quizTokenBudget : 0));
+    const temperature = isQuizReq
+      ? Math.min(Number.isFinite(configuredTemperature) ? configuredTemperature : 0.7, 0.3)
+      : (Number.isFinite(configuredTemperature) ? configuredTemperature : 0.7);
 
     let personaModifier = '';
     const activePersona = persona || settings.persona || 'general';
@@ -65,15 +70,14 @@ class GroqClient {
       searchModifier = '\n\n[Research-style response]\nProvide a careful, structured synthesis and distinguish established facts from uncertainty. You do not have live web-search access in this app: do not imply that you searched the web, and never invent citations or sources. If current information or citations are needed, say so clearly.';
     }
 
-    // NotebookLM Study Tool Instructions
-    const allPromptText = messages.map(m => (typeof m.content === 'string' ? m.content : '')).join(' ').toLowerCase();
-    const isQuizReq = allPromptText.includes('/quiz') || allPromptText.includes('quiz') || allPromptText.includes('knowledge check') || allPromptText.includes('practice test');
-    const isFlashcardReq = allPromptText.includes('/flashcard') || allPromptText.includes('flashcard') || allPromptText.includes('study deck');
-    const isAudioReq = allPromptText.includes('/audio') || allPromptText.includes('audio overview') || allPromptText.includes('deep dive');
+    // Only activate structured output for the current prompt. Scanning the full
+    // conversation caused old quiz requests to hijack unrelated later answers.
+    const isFlashcardReq = /\/flashcards?\b|\bflashcards?\b|\bstudy deck\b/i.test(latestUserText);
+    const isAudioReq = /\/audio\b|\baudio overview\b|\bdeep dive\b/i.test(latestUserText);
 
     let studyModifier = '';
     if (isQuizReq) {
-      studyModifier += '\n\n[Interactive Assessment Engine Active]\nYou must provide a comprehensive, challenging educational assessment. Provide a brief introduction, followed by questions structured inside a ```quiz-json code block containing valid JSON with:\n{\n  "title": "Topic Assessment",\n  "difficulty": "Intermediate",\n  "questions": [\n    {\n      "question": "Question text here?",\n      "options": ["First option", "Second option", "Third option", "Fourth option"],\n      "answerIndex": 0,\n      "explanation": "Detailed explanation of why this answer is correct."\n    }\n  ]\n}\n';
+      studyModifier += `\n\n[Interactive Quiz Output]\nReturn exactly ${requestedQuestionCount} complete questions in one valid quiz-json block. Each question needs a question string, four options, a zero-based answerIndex, and a concise explanation. Do not add prose outside the JSON block.`;
     }
     if (isFlashcardReq) {
       studyModifier += '\n\n[Interactive Flashcard Studio Active]\nFormat the study cards inside a ```flashcard-json code block containing valid JSON with:\n{\n  "title": "Topic Flashcards",\n  "subject": "Topic",\n  "cards": [\n    {\n      "id": 1,\n      "front": "Concept, term, or question prompt",\n      "back": "High-yield definition or core explanation",\n      "category": "High-Yield"\n    }\n  ]\n}\n';
@@ -160,6 +164,7 @@ class GroqClient {
     let tokenCount = 0;
     let fullText = '';
     let fullReasoning = '';
+    let finishReason = null;
 
     const payloadBody = {
       model: model,
@@ -223,7 +228,9 @@ class GroqClient {
 
           try {
             const parsed = JSON.parse(dataStr);
-            const delta = parsed.choices?.[0]?.delta;
+            const choice = parsed.choices?.[0];
+            if (choice?.finish_reason) finishReason = choice.finish_reason;
+            const delta = choice?.delta;
             if (!delta) continue;
 
             let chunkContent = '';
@@ -270,7 +277,9 @@ class GroqClient {
         if (dataStr && dataStr !== '[DONE]') {
           try {
             const parsed = JSON.parse(dataStr);
-            const delta = parsed.choices?.[0]?.delta;
+            const choice = parsed.choices?.[0];
+            if (choice?.finish_reason) finishReason = choice.finish_reason;
+            const delta = choice?.delta;
             if (delta?.content) {
               fullText += delta.content;
               tokenCount += Math.max(1, Math.round(delta.content.length / 4));
@@ -299,7 +308,9 @@ class GroqClient {
           tokenCount,
           elapsedSec: totalElapsedSec,
           tokensPerSec: finalTokensPerSec,
-          model
+          model,
+          finishReason,
+          truncated: finishReason === 'length'
         });
       }
     } catch (err) {

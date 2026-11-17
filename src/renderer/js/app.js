@@ -4,6 +4,7 @@ class GrauqueApp {
     this.activeConversationId = null;
     this.settings = {};
     this.isGenerating = false;
+    this.continueResponseTarget = null;
     this.currentAttachedImage = null; // base64 data url
     this.currentPersona = 'general';
     this.isDeepSearchMode = false;
@@ -1352,6 +1353,7 @@ class GrauqueApp {
             ${reasoningHtml}
             <div class="assistant-body" id="body-${idx}">${formattedContent}</div>
             <div class="assistant-actions-bar" id="actions-${idx}">
+              ${msg.truncated ? `<button class="msg-action-btn btn-continue-response" data-idx="${idx}" title="Continue the response that reached its output limit"><span>Continue</span></button>` : ''}
               <button class="msg-action-btn btn-copy-response" data-idx="${idx}" title="Copy full response to clipboard">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1453,6 +1455,19 @@ class GrauqueApp {
       this.chatInput.value = `Generate an interactive 5-question multiple choice assessment testing the core concepts explained in the response above.`;
       this.handleSend();
     });
+
+    const continueBtn = row.querySelector(`.btn-continue-response[data-idx="${idx}"]`);
+    continueBtn?.addEventListener('click', () => {
+      if (this.isGenerating || !msg.truncated) return;
+      const chat = this.conversations.find(conversation => conversation.id === this.activeConversationId);
+      if (!chat || idx !== chat.messages.length - 1) {
+        this.showToast('Continue is available for the latest response only.');
+        return;
+      }
+      this.continueResponseTarget = idx;
+      this.chatInput.value = 'Continue your previous response from exactly where it ended. Do not repeat completed text. Keep the same format and finish any incomplete JSON or code block.';
+      this.handleSend();
+    });
   }
 
   renderAssistantActionBar(row, idx, msg) {
@@ -1468,6 +1483,7 @@ class GrauqueApp {
     }
     if (actionsEl) {
       actionsEl.innerHTML = `
+        ${msg.truncated ? `<button class="msg-action-btn btn-continue-response" data-idx="${idx}" title="Continue the response that reached its output limit"><span>Continue</span></button>` : ''}
         <button class="msg-action-btn btn-copy-response" data-idx="${idx}" title="Copy full response to clipboard">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -1709,6 +1725,7 @@ class GrauqueApp {
 
     const apiKey = (this.settings.apiKey || '').trim();
     if (!apiKey) {
+      this.continueResponseTarget = null;
       this.openSettings();
       alert('Please enter your Groq API key in Settings to begin.');
       return;
@@ -1743,6 +1760,10 @@ class GrauqueApp {
       pdf: attachedPdf || null,
       timestamp: Date.now()
     };
+    if (Number.isInteger(this.continueResponseTarget)) {
+      userMsg.continueFor = this.continueResponseTarget;
+      this.continueResponseTarget = null;
+    }
     chat.messages.push(userMsg);
     chat.updatedAt = Date.now();
     this.saveConversations();
@@ -1793,6 +1814,9 @@ class GrauqueApp {
       model: modelToUse,
       timestamp: Date.now()
     };
+    if (Number.isInteger(lastUserMsg?.continueFor)) {
+      assistantMsg.continuationOf = lastUserMsg.continueFor;
+    }
     chat.messages.push(assistantMsg);
 
     const row = document.createElement('div');
@@ -1898,6 +1922,26 @@ class GrauqueApp {
         assistantMsg.reasoning = fullReasoning;
         assistantMsg.metrics = finalMetrics;
         chat.updatedAt = Date.now();
+
+        if (Number.isInteger(assistantMsg.continuationOf)) {
+          const originalMsg = chat.messages[assistantMsg.continuationOf];
+          if (originalMsg && originalMsg.role === 'assistant') {
+            originalMsg.content = `${originalMsg.content || ''}${fullText}`;
+            originalMsg.reasoning = `${originalMsg.reasoning || ''}${fullReasoning}`;
+            originalMsg.metrics = finalMetrics;
+            originalMsg.truncated = Boolean(finalMetrics.truncated);
+            // The continuation is merged into the original answer so structured
+            // quiz JSON can be parsed and rendered as one complete response.
+            chat.messages.splice(assistantIndex - 1, 2);
+            this.setGenerating(false);
+            this.saveConversations();
+            this.renderMessages(chat.messages);
+            this.scrollToBottom();
+            return;
+          }
+        }
+
+        assistantMsg.truncated = Boolean(finalMetrics.truncated);
 
         if (fullReasoning && reasoningWrapEl) {
           reasoningWrapEl.innerHTML = `

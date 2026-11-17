@@ -1,7 +1,7 @@
 {
   "name": "grauque",
   "productName": "Grauque",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Ultra-fast Groq-powered AI assistant for macOS with double-tap Option popup and quiz generator.",
   "main": "src/main/main.js",
   "scripts": {

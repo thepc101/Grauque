@@ -2669,6 +2669,18 @@ input:checked + .toggle-slider:before {
   vertical-align: -1px;
 }
 
+.assistant-actions-bar .btn-continue-response {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.assistant-actions-bar .btn-continue-response:hover {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
 /* Floating Slash Commands Menu */
 .slash-commands-popup {
   position: absolute;

@@ -6,38 +6,28 @@ class QuizManager {
   getQuizPrompt(topic, count = 5, difficulty = 'Intermediate', attachedDocTitle = '') {
     let groundingClause = '';
     if (attachedDocTitle) {
-      groundingClause = `The quiz must be strictly grounded in and directly test key concepts, definitions, and principles from the attached document ("${attachedDocTitle}"). Cite specific sections or pages in your explanations.\n`;
+      groundingClause = `Base every question on the attached document "${attachedDocTitle}". Only mention page numbers when they are present in the source text.\n`;
     }
 
-    return `Generate a comprehensive interactive multiple-choice assessment about "${topic}".
-Difficulty: ${difficulty}.
-Number of questions: ${count}.
+    return `Create exactly ${count} ${difficulty.toLowerCase()} multiple-choice questions about "${topic}".
 ${groundingClause}
-Please format your response in two parts:
-1. First, provide a concise high-yield conceptual introduction to ${topic}.
-2. Second, provide the quiz structured inside the following exact JSON code block so the interactive assessment runner can render it for the student:
+Return only one \`\`\`quiz-json code block. Do not add an introduction, conclusion, or text outside the block. Make every question self-contained, provide exactly four distinct options, use a zero-based answerIndex, and include a concise explanation. Ensure the JSON is valid and complete.
 
 \`\`\`quiz-json
 {
-  "title": "${topic} Knowledge Assessment",
+  "title": "Knowledge Check",
   "difficulty": "${difficulty}",
   "questions": [
     {
-      "question": "Clear, challenging multiple-choice question testing a core concept?",
-      "options": [
-        "First option",
-        "Second option",
-        "Third option",
-        "Fourth option"
-      ],
+      "question": "Question text?",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "answerIndex": 0,
-      "explanation": "Clear, detailed explanation explaining why this answer is correct and citing specific concepts from the source material."
+      "explanation": "Why the correct answer is right."
     }
   ]
 }
 \`\`\`
-
-3. Finally, provide 2-3 high-yield exam takeaways or memory anchors for ${topic}.`;
+`;
   }
 
   // Sanitize and safely parse potentially malformed JSON (e.g. trailing commas, unescaped chars)
@@ -72,7 +62,8 @@ Please format your response in two parts:
       if (candidate.startsWith('{') && (candidate.includes('"questions"') || candidate.includes('questions'))) {
         const parsed = this.cleanAndParseJson(candidate);
         if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-          return this.normalizeQuizData(parsed);
+          const normalized = this.normalizeQuizData(parsed);
+          if (normalized.questions.length > 0) return normalized;
         }
       }
     }
@@ -82,7 +73,8 @@ Please format your response in two parts:
     if (rawJsonMatch) {
       const parsed = this.cleanAndParseJson(rawJsonMatch[1]);
       if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
-        return this.normalizeQuizData(parsed);
+        const normalized = this.normalizeQuizData(parsed);
+        if (normalized.questions.length > 0) return normalized;
       }
     }
 
@@ -130,7 +122,7 @@ Please format your response in two parts:
 
       // Extract correct answer: Answer: B, **Answer:** B, Answer: (B)
       const ansMatch = trimmed.match(/(?:Answer|Correct Answer|Correct|Key)\s*[:\-]?\s*[\*\*_]*\s*[\(\[]?([A-Da-d])[\)\]]?/i);
-      let answerIndex = 0;
+      let answerIndex = -1;
       if (ansMatch) {
         const letter = ansMatch[1].toUpperCase();
         const foundIdx = letters.indexOf(letter);
@@ -138,11 +130,10 @@ Please format your response in two parts:
           answerIndex = foundIdx;
         } else {
           const charCode = letter.charCodeAt(0) - 65;
-          if (charCode >= 0 && charCode < options.length) {
-            answerIndex = charCode;
-          }
+          if (charCode >= 0 && charCode < options.length) answerIndex = charCode;
         }
       }
+      if (answerIndex < 0) continue;
 
       // Extract explanation
       const expMatch = trimmed.match(/(?:Explanation|Rationale|Note|Why)\s*[:\-]?\s*[\*\*_]*\s*([^\n]+(?:\n(?!\n|\d+\.)[^\n]+)*)/i);
@@ -169,28 +160,39 @@ Please format your response in two parts:
 
   // Ensure clean uniform question attributes
   normalizeQuizData(data) {
-    const questions = (data.questions || []).map((q, idx) => {
-      let options = Array.isArray(q.options) ? q.options.map(o => String(o).trim()) : [];
-      let ansIdx = parseInt(q.answerIndex, 10);
-      if (isNaN(ansIdx) || ansIdx < 0 || ansIdx >= options.length) {
-        // Fallback: check if answer is given as a string letter e.g. "B" or "A"
-        if (typeof q.answer === 'string') {
-          const letter = q.answer.trim().toUpperCase().charAt(0);
-          const charCode = letter.charCodeAt(0) - 65;
-          ansIdx = (charCode >= 0 && charCode < options.length) ? charCode : 0;
-        } else {
-          ansIdx = 0;
-        }
-      }
+    const questions = (Array.isArray(data.questions) ? data.questions : [])
+      .map((q, idx) => {
+        const optionSource = q.options ?? q.choices ?? q.answers;
+        const rawOptions = Array.isArray(optionSource)
+          ? optionSource
+          : (optionSource && typeof optionSource === 'object'
+            ? Object.keys(optionSource).sort().map(key => optionSource[key])
+            : []);
+        const options = rawOptions.map(option => String(option ?? '').trim()).filter(Boolean);
+        const answer = q.answer ?? q.correctAnswer ?? q.correct_answer;
+        let ansIdx = Number.parseInt(q.answerIndex, 10);
 
-      return {
-        id: idx + 1,
-        question: String(q.question || `Question ${idx + 1}`).trim(),
-        options: options,
-        answerIndex: ansIdx,
-        explanation: String(q.explanation || 'No additional explanation provided.').trim()
-      };
-    });
+        if (!Number.isInteger(ansIdx) || ansIdx < 0 || ansIdx >= options.length) {
+          if (typeof answer === 'number' && Number.isInteger(answer) && answer >= 0 && answer < options.length) {
+            ansIdx = answer;
+          } else if (typeof answer === 'string') {
+            const letter = answer.trim().match(/^([A-F])(?:[\).:]|\s|$)/i)?.[1]?.toUpperCase();
+            const letterIndex = letter ? letter.charCodeAt(0) - 65 : -1;
+            const textIndex = options.findIndex(option => option.toLowerCase() === answer.trim().toLowerCase());
+            ansIdx = letterIndex >= 0 && letterIndex < options.length ? letterIndex : textIndex;
+          }
+        }
+
+        return {
+          id: idx + 1,
+          question: String(q.question || q.prompt || '').trim(),
+          options,
+          answerIndex: ansIdx,
+          explanation: String(q.explanation || q.rationale || 'Review the source material for more context.').trim()
+        };
+      })
+      .filter(q => q.question && q.options.length >= 2 &&
+        Number.isInteger(q.answerIndex) && q.answerIndex >= 0 && q.answerIndex < q.options.length);
 
     return {
       title: data.title || 'Knowledge Assessment',

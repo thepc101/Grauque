@@ -18,7 +18,7 @@ const defaultSettings = {
   apiKey: '',
   model: 'openai/gpt-oss-120b',
   temperature: 0.7,
-  maxTokens: 800,
+  maxTokens: 4096,
   systemPrompt: 'You are Grauque, an exceptionally capable and efficient AI assistant powered by Groq. Be direct, concise, and focused. Avoid unnecessary filler or overly verbose preamble. Provide thorough depth only when explicitly requested. For mathematical or scientific formulas, format using standard LaTeX math ($ for inline, $$ for block formulas). Never output raw <br> tags.',
   enableDoubleOption: true,
   enableOptionSpace: true,
@@ -32,6 +32,8 @@ function loadSettings() {
     if (fs.existsSync(settingsPath)) {
       const data = fs.readFileSync(settingsPath, 'utf8');
       const parsed = JSON.parse(data);
+      // 800 was the old default, which routinely cut off longer answers and quizzes.
+      if (parsed.maxTokens === 800) parsed.maxTokens = 4096;
       // Migrate deprecated models automatically if present
       if (parsed.model && (
         parsed.model.includes('llama') ||
