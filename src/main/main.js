@@ -190,11 +190,8 @@ app.whenReady().then(() => {
   // Allow microphone access for voice transcription
   if (session && session.defaultSession) {
     session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
-      if (permission === 'media') {
-        callback(true);
-        return;
-      }
-      callback(true);
+      const isAppWindow = webContents.getURL().startsWith('file://');
+      callback(permission === 'media' && isAppWindow);
     });
   }
 

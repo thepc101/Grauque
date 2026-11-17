@@ -333,10 +333,11 @@ class GrauqueApp {
     this.btnDeepResearch?.addEventListener('click', () => {
       this.isDeepSearchMode = !this.isDeepSearchMode;
       this.btnDeepResearch.classList.toggle('active', this.isDeepSearchMode);
+      this.btnDeepResearch.setAttribute('aria-pressed', String(this.isDeepSearchMode));
       if (this.isDeepSearchMode) {
-        this.showToast('Deep Research & Search Grounding enabled');
+        this.showToast('Research-style answers enabled · no live web search');
       } else {
-        this.showToast('Standard direct mode');
+        this.showToast('Standard response style enabled');
       }
     });
 
@@ -1743,6 +1744,9 @@ class GrauqueApp {
       timestamp: Date.now()
     };
     chat.messages.push(userMsg);
+    chat.updatedAt = Date.now();
+    this.saveConversations();
+    this.renderHistoryList();
     this.welcomeScreen.style.display = 'none';
     this.appendMessageElement(userMsg, chat.messages.length - 1);
     this.scrollToBottom();
@@ -1893,6 +1897,7 @@ class GrauqueApp {
         assistantMsg.content = fullText;
         assistantMsg.reasoning = fullReasoning;
         assistantMsg.metrics = finalMetrics;
+        chat.updatedAt = Date.now();
 
         if (fullReasoning && reasoningWrapEl) {
           reasoningWrapEl.innerHTML = `
